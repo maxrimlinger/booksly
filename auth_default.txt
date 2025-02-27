@@ -1,0 +1,5 @@
+USERNAME
+PASSWORD
+
+1. Copy this file into a new file named "auth.txt" within this same directory.
+2. Edit the two lines above with your own username and password.
