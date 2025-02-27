@@ -12,7 +12,7 @@ import com.jcraft.jsch.Session;
 import com.jcraft.jsch.JSch;
 
 public class App {
-    static final String URL_FORMAT = "jdbc:postgresql://localhost:%d/p32001_25";
+    private static final String URL_FORMAT = "jdbc:postgresql://localhost:%d/p32001_25";
 
     private static final String AUTH_FILE = "./auth.txt";
 
@@ -22,6 +22,12 @@ public class App {
 
     private static final String REMOTE_MACHINE_HOST = "starbug.cs.rit.edu";
     private static final String REMOTE_DB_HOST = "127.0.0.1";
+
+    private Connection connection;
+
+    public Connection getConnection() {
+        return this.connection;
+    }
 
     private int tunnel(String username, String password) throws JSchException {
         JSch jsch = new JSch();
@@ -42,17 +48,17 @@ public class App {
         System.err.println(message + ": " + e.getLocalizedMessage());
     }
 
-    private void executeQuery(Connection connection) throws SQLException {
+    private void executeQuery() throws SQLException {
         String query = "SELECT num FROM canuseethis;";
 
-        ResultSet result = connection.createStatement().executeQuery(query);
+        ResultSet result = this.connection.createStatement().executeQuery(query);
 
         while (result.next()) {
             System.out.println("id: " + result.getInt(1));
         }
     }
 
-    private void run() {
+    private boolean connect() {
         try {
             Credentials auth = Credentials.fromFile(AUTH_FILE);
             int assignedPort = tunnel(auth.getUsername(), auth.getPassword());
@@ -60,9 +66,9 @@ public class App {
 
             Class.forName("org.postgresql.Driver");
 
-            Connection connection = DriverManager.getConnection(url, auth.getUsername(), auth.getPassword());
+            this.connection = DriverManager.getConnection(url, auth.getUsername(), auth.getPassword());
 
-            executeQuery(connection);
+            return true;
         } catch (FileNotFoundException e) {
             logError("Auth file not found", e);
         } catch (JSchException e) {
@@ -71,6 +77,22 @@ public class App {
             logError("Database driver not found", e);
         } catch (SQLException e) {
             logError("Database error", e);
+        }
+
+        return false;
+    }
+
+    private void run() {
+        boolean success = connect();
+
+        if (!success) {
+            System.err.println("Couldn't connect, now exiting...");
+        }
+
+        try {
+            executeQuery();
+        } catch (SQLException e) {
+            logError("Coudln't execute query", e);
         }
     }
 
