@@ -280,6 +280,37 @@ public class App {
         }
     }
 
+    private void bookReadCommand(int bookId, int startPage, int endPage, Timestamp startTime, Timestamp endTime) {
+        if (startPage <= 0) {
+            System.out.println("Start page must be at least 1");
+            return;
+        }
+
+        if (startPage > endPage) {
+            System.out.println("End page must be at least start page");
+            return;
+        }
+
+        if (endTime.before(startTime)) {
+            System.out.println("End time must be at least start time");
+        }
+
+        if (!Book.doesBookExist(bookId)) {
+            System.out.println("A book with the given id doesn't exist");
+            return;
+        }
+
+        Book book = new Book(bookId);
+        int length = book.getLength();
+
+        if (endPage > length) {
+            System.out.println("The end page is at most the length of the book");
+            return;
+        }
+
+        this.user.readBook(bookId, startPage, endPage, startTime, endTime);
+    }
+
     private void executeCommand(String[] args) {
         if (args[0].equals("signup")) {
             signupCommand();
@@ -303,6 +334,14 @@ public class App {
             int rating = Integer.parseInt(args[3]);
 
             bookRateCommand(bookId, rating);
+        } else if (args[0].equals("book") && args[1].equals("read")) {
+            int bookId = Integer.parseInt(args[2]);
+            int startPage = Integer.parseInt(args[3]);
+            int endPage = Integer.parseInt(args[4]);
+            Timestamp startTime = Timestamp.valueOf(args[5]);
+            Timestamp endTime = Timestamp.valueOf(args[6]);
+
+            bookReadCommand(bookId, startPage, endPage, startTime, endTime);
         }
     }
 

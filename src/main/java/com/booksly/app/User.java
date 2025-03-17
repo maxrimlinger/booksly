@@ -349,4 +349,34 @@ public class User {
             System.exit(1);
         }
     }
+
+    /**
+     * Adds a session to the session table with the given data. Assumes all data
+     * is valid and has been previously checked for integrity.
+     * 
+     * @param bookId    The id of the book the user is reading
+     * @param startPage The page on which the user began reading
+     * @param endPage   The page on which the user finished reading
+     * @param startTime The time the user began reading
+     * @param endTime   The time the user finished reading
+     */
+    public void readBook(int bookId, int startPage, int endPage, Timestamp startTime, Timestamp endTime) {
+        try {
+            PreparedStatement ps = CONNECTION
+                    .prepareStatement(
+                            "insert into session(session_id, user_id, book_id, start_page, end_page, start_time, end_time) values (DEFAULT, ?, ?, ?, ?, ?, ?)");
+
+            ps.setInt(1, this.userId);
+            ps.setInt(2, bookId);
+            ps.setInt(3, startPage);
+            ps.setInt(4, endPage);
+            ps.setTimestamp(5, startTime);
+            ps.setTimestamp(6, endTime);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 }
