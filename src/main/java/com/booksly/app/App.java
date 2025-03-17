@@ -28,6 +28,7 @@ public class App {
     private static final String REMOTE_DB_HOST = "127.0.0.1";
 
     private Connection connection;
+    private User user;
 
     private static final Scanner INPUT = new Scanner(System.in);
 
@@ -78,15 +79,67 @@ public class App {
         return false;
     }
 
+    private boolean doesUserExist(String username) {
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(
+                    "select username from users where username = ?");
+
+            ps.setString(1, username);
+
+            ResultSet result = ps.executeQuery();
+
+            return result.next();
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            return false;
+        }
+    }
+
+    private boolean doesEmailExist(String email) {
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(
+                    "select email from users where email = ?");
+
+            ps.setString(1, email);
+
+            ResultSet result = ps.executeQuery();
+
+            return result.next();
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            return false;
+        }
+    }
+
     private void signupCommand() {
-        System.out.print("username: ");
-        String username = INPUT.nextLine().strip();
+        String username;
+
+        while (true) {
+            System.out.print("username: ");
+            username = INPUT.nextLine().strip();
+
+            if (!doesUserExist(username)) {
+                break;
+            }
+
+            System.out.println("A user with that username already exists, please provide a new one");
+        }
 
         System.out.print("password: ");
         String password = INPUT.nextLine().strip();
 
-        System.out.print("email: ");
-        String email = INPUT.nextLine().strip();
+        String email;
+
+        while (true) {
+            System.out.print("email: ");
+            email = INPUT.nextLine().strip();
+
+            if (!doesEmailExist(email)) {
+                break;
+            }
+
+            System.out.println("That email is already taken, please provide a new one");
+        }
 
         System.out.print("first name: ");
         String firstName = INPUT.nextLine().strip();
@@ -110,6 +163,16 @@ public class App {
             ps.setTimestamp(7, now);
 
             ps.executeUpdate();
+
+            int userId = User.getUserId(username);
+
+            if (userId == -1) {
+                System.err.println("should exist");
+                System.exit(1);
+            }
+
+            this.user = new User(userId);
+            this.user.addAccess();
         } catch (SQLException e) {
             System.err.println("Couldn't create user");
             System.err.println(e.getLocalizedMessage());
@@ -121,7 +184,7 @@ public class App {
 
         try {
             PreparedStatement ps = this.connection.prepareStatement(
-                    "select password_hash from users where username is ?");
+                    "select password_hash from users where username = ?");
 
             ps.setString(1, username);
 
@@ -132,6 +195,16 @@ public class App {
 
                 if (expectedHash.equals(passwordHash)) {
                     System.out.println("Correct password, you are now logged in");
+
+                    int userId = User.getUserId(username);
+
+                    if (userId == -1) {
+                        System.err.println("should exist");
+                        System.exit(1);
+                    }
+
+                    this.user = new User(userId);
+                    this.user.addAccess();
                 } else {
                     System.out.println("Incorrect password, please try again");
                 }
@@ -144,11 +217,92 @@ public class App {
         }
     }
 
+    private void userSearchCommand(String email) {
+        User foundUser = User.getUserByEmail(email);
+
+        if (foundUser != null) {
+            System.out.println("user id: " + foundUser.getUserId());
+            System.out.println("username: " + foundUser.getUsername());
+            System.out.println("email: " + foundUser.getEmail());
+            System.out.println("name: " + foundUser.getFirstName() + " " + foundUser.getLastName());
+        } else {
+            System.out.println("Couldn't find a user with that email");
+        }
+    }
+
+    private void userFollowCommand(String username) {
+        if (!User.doesUserExist(username)) {
+            System.out.println("No user found with that username");
+            return;
+        }
+
+        if (this.user.isFollowing(username)) {
+            System.out.println("You are already following that user");
+            return;
+        }
+
+        this.user.followUser(username);
+
+        System.out.println("You are now following " + username);
+    }
+
+    private void userUnfollowCommand(String username) {
+        if (!User.doesUserExist(username)) {
+            System.out.println("No user found with that username");
+            return;
+        }
+
+        if (!this.user.isFollowing(username)) {
+            System.out.println("You are not following that user");
+            return;
+        }
+
+        this.user.unfollowUser(username);
+
+        System.out.println("You are no longer following " + username);
+    }
+
+    private void bookRateCommand(int bookId, int rating) {
+        if (rating <= 0 || rating > 5) {
+            System.out.println("Rating must be between 1 and 5, inclusive");
+            return;
+        }
+
+        if (!Book.doesBookExist(bookId)) {
+            System.out.println("A book with the given id does not exist");
+            return;
+        }
+
+        if (this.user.hasRatedBook(bookId)) {
+            this.user.updateBookRating(bookId, rating);
+        } else {
+            this.user.rateBook(bookId, rating);
+        }
+    }
+
     private void executeCommand(String[] args) {
         if (args[0].equals("signup")) {
             signupCommand();
         } else if (args[0].equals("login")) {
             loginCommand(args[1], args[2]);
+        } else if (args[0].equals("whoami")) {
+            if (this.user == null) {
+                System.out.println("You are not currently logged in");
+            } else {
+                System.out.println(
+                        "You are logged in as " + this.user.getUsername() + " (id = " + this.user.getUserId() + ")");
+            }
+        } else if (args[0].equals("user") && args[1].equals("search")) {
+            userSearchCommand(args[2]);
+        } else if (args[0].equals("user") && args[1].equals("follow")) {
+            userFollowCommand(args[2]);
+        } else if (args[0].equals("user") && args[1].equals("unfollow")) {
+            userUnfollowCommand(args[2]);
+        } else if (args[0].equals("book") && args[1].equals("rate")) {
+            int bookId = Integer.parseInt(args[2]);
+            int rating = Integer.parseInt(args[3]);
+
+            bookRateCommand(bookId, rating);
         }
     }
 
@@ -175,9 +329,13 @@ public class App {
             System.err.println("Couldn't connect, now exiting...");
         }
 
+        User.setConnection(connection);
+
         inputLoop();
 
         // SampleDataLoader loader = new SampleDataLoader(this.connection);
+
+        // loader.loadSampleFollows();
 
         // System.out.println("done");
     }

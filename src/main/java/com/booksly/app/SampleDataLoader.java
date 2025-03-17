@@ -25,7 +25,6 @@ public class SampleDataLoader {
 
     public void loadSampleAccesses() {
         try {
-
             PreparedStatement ps = connection
                     .prepareStatement(
                             "insert into user_access(access_id, user_id, access_time) values (DEFAULT, ?, ?)");
@@ -158,8 +157,7 @@ public class SampleDataLoader {
             }
 
             PreparedStatement ps = connection
-                    .prepareStatement(
-                            "insert into contributor(contributor_id, name) values (DEFAULT, ?)");
+                    .prepareStatement("insert into contributor(contributor_id, name) values (DEFAULT, ?)");
 
             for (int i = 0; i < 100; i++) {
                 for (int j = 0; j < 100; j++) {
@@ -281,8 +279,7 @@ public class SampleDataLoader {
     public void loadSampleGenres() {
         try {
             PreparedStatement ps = connection
-                    .prepareStatement(
-                            "insert into book_genre(book_id, genre_id) values (?, ?)");
+                    .prepareStatement("insert into book_genre(book_id, genre_id) values (?, ?)");
 
             Random rng = new Random();
 
@@ -316,8 +313,7 @@ public class SampleDataLoader {
             String idFieldName = contributorType + "_id";
 
             PreparedStatement ps = connection
-                    .prepareStatement(
-                            "insert into " + tableName + "(book_id, " + idFieldName + ") values (?, ?)");
+                    .prepareStatement("insert into " + tableName + "(book_id, " + idFieldName + ") values (?, ?)");
 
             Random rng = new Random();
 
@@ -350,8 +346,7 @@ public class SampleDataLoader {
     public void loadSampleRatings() {
         try {
             PreparedStatement ps = connection
-                    .prepareStatement(
-                            "insert into rating(user_id, book_id, rating) values (?, ?, ?)");
+                    .prepareStatement("insert into rating(user_id, book_id, rating) values (?, ?, ?)");
 
             Random rng = new Random();
 
@@ -365,6 +360,35 @@ public class SampleDataLoader {
                 ps.setInt(1, userId);
                 ps.setInt(2, bookId);
                 ps.setInt(3, rating);
+
+                try {
+                    ps.executeUpdate();
+                    added++;
+                } catch (SQLException e) {
+                    System.err.println(e.getLocalizedMessage());
+                    System.out.println("conflicting ratings, trying again");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+        }
+    }
+
+    public void loadSampleFollows() {
+        try {
+            PreparedStatement ps = connection
+                    .prepareStatement("insert into follows(follower_id, followee_id) values (?, ?)");
+
+            Random rng = new Random();
+
+            int added = 0;
+
+            while (added < 25000) {
+                int followerId = rng.nextInt(1, 10001);
+                int followeeId = rng.nextInt(1, 10001);
+
+                ps.setInt(1, followerId);
+                ps.setInt(2, followeeId);
 
                 try {
                     ps.executeUpdate();
