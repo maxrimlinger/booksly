@@ -78,6 +78,46 @@ public class User {
         return null;
     }
 
+    public static boolean isUsernameTaken(String username) {
+        try {
+            PreparedStatement ps = CONNECTION.prepareStatement(
+                    "select count(*) from users where username = ?");
+
+            ps.setString(1, username);
+
+            ResultSet result = ps.executeQuery();
+
+            result.next();
+
+            return result.getInt(1) == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        return false;
+    }
+
+    public static boolean isEmailTaken(String email) {
+        try {
+            PreparedStatement ps = CONNECTION.prepareStatement(
+                    "select count(*) from users where email = ?");
+
+            ps.setString(1, email);
+
+            ResultSet result = ps.executeQuery();
+
+            result.next();
+
+            return result.getInt(1) == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        return false;
+    }
+
     public User(int userId) {
         this.userId = userId;
     }

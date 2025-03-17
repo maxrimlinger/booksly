@@ -47,8 +47,7 @@ public class App {
         session.setConfig(config);
         session.connect();
 
-        return session.setPortForwardingL(LOCAL_FORWARD_PORT, REMOTE_DB_HOST,
-                REMOTE_DB_PORT);
+        return session.setPortForwardingL(LOCAL_FORWARD_PORT, REMOTE_DB_HOST, REMOTE_DB_PORT);
     }
 
     private static void logError(String message, Exception e) {
@@ -79,38 +78,6 @@ public class App {
         return false;
     }
 
-    private boolean doesUserExist(String username) {
-        try {
-            PreparedStatement ps = this.connection.prepareStatement(
-                    "select username from users where username = ?");
-
-            ps.setString(1, username);
-
-            ResultSet result = ps.executeQuery();
-
-            return result.next();
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
-            return false;
-        }
-    }
-
-    private boolean doesEmailExist(String email) {
-        try {
-            PreparedStatement ps = this.connection.prepareStatement(
-                    "select email from users where email = ?");
-
-            ps.setString(1, email);
-
-            ResultSet result = ps.executeQuery();
-
-            return result.next();
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
-            return false;
-        }
-    }
-
     private void signupCommand() {
         String username;
 
@@ -118,7 +85,7 @@ public class App {
             System.out.print("username: ");
             username = INPUT.nextLine().strip();
 
-            if (!doesUserExist(username)) {
+            if (!User.isUsernameTaken(username)) {
                 break;
             }
 
@@ -134,7 +101,7 @@ public class App {
             System.out.print("email: ");
             email = INPUT.nextLine().strip();
 
-            if (!doesEmailExist(email)) {
+            if (!User.isEmailTaken(email)) {
                 break;
             }
 
