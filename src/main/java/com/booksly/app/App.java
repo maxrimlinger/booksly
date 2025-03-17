@@ -3,7 +3,6 @@ package com.booksly.app;
 import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -48,16 +47,6 @@ public class App {
         System.err.println(message + ": " + e.getLocalizedMessage());
     }
 
-    private void executeQuery() throws SQLException {
-        String query = "SELECT num FROM canuseethis;";
-
-        ResultSet result = this.connection.createStatement().executeQuery(query);
-
-        while (result.next()) {
-            System.out.println("id: " + result.getInt(1));
-        }
-    }
-
     private boolean connect() {
         try {
             Credentials auth = Credentials.fromFile(AUTH_FILE);
@@ -89,11 +78,7 @@ public class App {
             System.err.println("Couldn't connect, now exiting...");
         }
 
-        try {
-            executeQuery();
-        } catch (SQLException e) {
-            logError("Coudln't execute query", e);
-        }
+        // SampleDataLoader loader = new SampleDataLoader(this.connection);
     }
 
     public static void main(String[] args) {
