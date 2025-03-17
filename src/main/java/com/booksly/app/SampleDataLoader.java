@@ -139,6 +139,48 @@ public class SampleDataLoader {
         }
     }
 
+    public void loadSampleContributors() {
+        try {
+            Scanner first = new Scanner(new File("./data/contributor_first.txt"));
+            Scanner last = new Scanner(new File("./data/contributor_last.txt"));
+
+            List<String> firstNames = new ArrayList<>();
+
+            while (first.hasNextLine()) {
+                firstNames.add(first.nextLine().strip());
+            }
+
+            List<String> lastNames = new ArrayList<>();
+
+            while (last.hasNextLine()) {
+                lastNames.add(last.nextLine().strip());
+            }
+
+            PreparedStatement ps = connection
+                    .prepareStatement(
+                            "insert into contributor(contributor_id, name) values (DEFAULT, ?)");
+
+            for (int i = 0; i < 100; i++) {
+                for (int j = 0; j < 100; j++) {
+                    String firstName = firstNames.get(i);
+                    String lastName = lastNames.get(j);
+                    String name = firstName + " " + lastName;
+
+                    ps.setString(1, name);
+
+                    ps.executeUpdate();
+                }
+            }
+
+            first.close();
+            last.close();
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+        }
+    }
+
     private Date getCreationDate(int userId) {
         try {
             String query = "select creation_date from users where user_id = " + userId + ";";
