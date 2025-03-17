@@ -10,6 +10,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -33,11 +34,11 @@ public class SampleDataLoader {
 
             for (int i = 0; i < 5000; i++) {
                 int userId = randomId.nextInt(1, 10001);
-                Date creationDate = getCreationDate(userId);
-                Date accessTime = getRandomDate(creationDate, 2025);
+                Timestamp creationDate = getCreationTimestamp(userId);
+                Timestamp accessTime = getRandomTimestamp(creationDate, 2025);
 
                 ps.setInt(1, userId);
-                ps.setDate(2, accessTime);
+                ps.setTimestamp(2, accessTime);
 
                 ps.executeUpdate();
             }
@@ -46,7 +47,7 @@ public class SampleDataLoader {
         }
     }
 
-    private String hashPassword(String password) {
+    public static String hashPassword(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] encodedhash = digest.digest(
@@ -70,20 +71,20 @@ public class SampleDataLoader {
         return hexString.toString();
     }
 
-    private static Date getRandomDate(int startYear, int endYear) {
+    private static java.sql.Timestamp getRandomTimestamp(int startYear, int endYear) {
         Random random = new Random();
-        long startMillis = Date.valueOf(startYear + "-01-01").getTime();
-        long endMillis = Date.valueOf(endYear + "-12-31").getTime();
+        long startMillis = Timestamp.valueOf(startYear + "-01-01 00:00:00").getTime();
+        long endMillis = Timestamp.valueOf(endYear + "-12-31 23:59:59").getTime();
         long randomMillisSinceEpoch = startMillis + (long) (random.nextDouble() * (endMillis - startMillis));
-        return new Date(randomMillisSinceEpoch);
+        return new Timestamp(randomMillisSinceEpoch);
     }
 
-    private static Date getRandomDate(Date startDate, int maxYear) {
+    private static Timestamp getRandomTimestamp(Timestamp startDate, int maxYear) {
         Random random = new Random();
         long startMillis = startDate.getTime();
-        long endMillis = Date.valueOf(maxYear + "-12-31").getTime();
+        long endMillis = Timestamp.valueOf(maxYear + "-12-31 23:59:59").getTime();
         long randomMillisSinceEpoch = startMillis + (long) (random.nextDouble() * (endMillis - startMillis));
-        return new Date(randomMillisSinceEpoch);
+        return new Timestamp(randomMillisSinceEpoch);
     }
 
     public void loadSampleUsers() {
@@ -114,17 +115,17 @@ public class SampleDataLoader {
                     String username = firstName + lastName;
                     String email = firstName.toLowerCase() + lastName.toLowerCase() + "@gmail.com";
                     String password = "pass_" + firstName + lastName;
-                    String password_hash = hashPassword(password);
-                    Date creationDate = getRandomDate(2020, 2025);
-                    Date lastAccessDate = getRandomDate(creationDate, 2025);
+                    String passwordHash = hashPassword(password);
+                    Timestamp creationDate = getRandomTimestamp(2020, 2025);
+                    Timestamp lastAccessDate = getRandomTimestamp(creationDate, 2025);
 
                     ps.setString(1, username);
-                    ps.setString(2, password_hash);
+                    ps.setString(2, passwordHash);
                     ps.setString(3, firstName);
                     ps.setString(4, lastName);
                     ps.setString(5, email);
-                    ps.setDate(6, creationDate);
-                    ps.setDate(7, lastAccessDate);
+                    ps.setTimestamp(6, creationDate);
+                    ps.setTimestamp(7, lastAccessDate);
 
                     ps.executeUpdate();
                 }
@@ -181,15 +182,17 @@ public class SampleDataLoader {
         }
     }
 
-    private Date getCreationDate(int userId) {
+    private Timestamp getCreationTimestamp(int userId) {
         try {
-            String query = "select creation_date from users where user_id = " + userId + ";";
-            System.out.println(query);
-            ResultSet result = connection.createStatement()
-                    .executeQuery(query);
+            PreparedStatement ps = this.connection
+                    .prepareStatement("select creation_date from users where user_id = ?");
+
+            ps.setInt(1, userId);
+
+            ResultSet result = ps.executeQuery();
 
             if (result.next()) {
-                return result.getDate(1);
+                return result.getTimestamp(1);
             } else {
                 System.err.println("user not found");
                 System.exit(1);
@@ -220,6 +223,159 @@ public class SampleDataLoader {
         } catch (Exception e) {
             System.err.println(e.getLocalizedMessage());
             System.exit(1);
+        }
+    }
+
+    private static final List<String> AUDIENCES = List.of("Kids", "Teens", "Adults");
+
+    public void loadSampleBooks() {
+        try {
+            Scanner adjectiveScanner = new Scanner(new File("./data/book_adjectives.txt"));
+            Scanner nounScanner = new Scanner(new File("./data/book_nouns.txt"));
+
+            List<String> adjectives = new ArrayList<>();
+
+            while (adjectiveScanner.hasNextLine()) {
+                adjectives.add(adjectiveScanner.nextLine().strip());
+            }
+
+            List<String> nouns = new ArrayList<>();
+
+            while (nounScanner.hasNextLine()) {
+                nouns.add(nounScanner.nextLine().strip());
+            }
+
+            PreparedStatement ps = connection
+                    .prepareStatement(
+                            "insert into book(book_id, title, audience, release_date, length) values (DEFAULT, ?, ?, ?, ?)");
+
+            Random rng = new Random();
+
+            for (int i = 0; i < 100; i++) {
+                for (int j = 0; j < 100; j++) {
+                    String adjective = adjectives.get(i);
+                    String noun = nouns.get(j);
+                    String title = "The " + adjective + " " + noun;
+                    String audience = AUDIENCES.get(rng.nextInt(0, 3));
+                    Date releaseDate = new Date(getRandomTimestamp(1970, 2025).getTime());
+                    int length = rng.nextInt(50, 1001);
+
+                    ps.setString(1, title);
+                    ps.setString(2, audience);
+                    ps.setDate(3, releaseDate);
+                    ps.setInt(4, length);
+
+                    ps.executeUpdate();
+                }
+            }
+
+            adjectiveScanner.close();
+            nounScanner.close();
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+        }
+    }
+
+    public void loadSampleGenres() {
+        try {
+            PreparedStatement ps = connection
+                    .prepareStatement(
+                            "insert into book_genre(book_id, genre_id) values (?, ?)");
+
+            Random rng = new Random();
+
+            for (int bookId = 1; bookId <= 10000; bookId++) {
+                int genreCount = rng.nextInt(1, 4);
+
+                int added = 0;
+
+                while (added < genreCount) {
+                    ps.setInt(1, bookId);
+                    int genreId = rng.nextInt(1, 21);
+                    ps.setInt(2, genreId);
+
+                    try {
+                        ps.executeUpdate();
+                        added++;
+                    } catch (SQLException e) {
+                        System.err.println(e.getLocalizedMessage());
+                        System.out.println("conflicting genres, trying again");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+        }
+    }
+
+    public void loadSampleBookContributors(String contributorType) {
+        try {
+            String tableName = "book_" + contributorType;
+            String idFieldName = contributorType + "_id";
+
+            PreparedStatement ps = connection
+                    .prepareStatement(
+                            "insert into " + tableName + "(book_id, " + idFieldName + ") values (?, ?)");
+
+            Random rng = new Random();
+
+            for (int bookId = 1; bookId <= 10000; bookId++) {
+                int contributorCount = rng.nextInt(1, 11) >= 9 ? 2 : 1;
+
+                int added = 0;
+
+                while (added < contributorCount) {
+                    ps.setInt(1, bookId);
+                    int contributorId = rng.nextInt(1, 10001);
+                    ps.setInt(2, contributorId);
+
+                    try {
+                        ps.executeUpdate();
+                        added++;
+                    } catch (SQLException e) {
+                        System.err.println(e.getLocalizedMessage());
+                        System.out.println("conflicting contributors, trying again");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+        }
+    }
+
+    private static final List<Integer> RATING_DISTRIBUTION = List.of(5, 5, 4, 4, 4, 4, 3, 3, 2, 1);
+
+    public void loadSampleRatings() {
+        try {
+            PreparedStatement ps = connection
+                    .prepareStatement(
+                            "insert into rating(user_id, book_id, rating) values (?, ?, ?)");
+
+            Random rng = new Random();
+
+            int added = 0;
+
+            while (added < 25000) {
+                int userId = rng.nextInt(1, 10001);
+                int bookId = rng.nextInt(1, 10001);
+                int rating = RATING_DISTRIBUTION.get(rng.nextInt(0, 10));
+
+                ps.setInt(1, userId);
+                ps.setInt(2, bookId);
+                ps.setInt(3, rating);
+
+                try {
+                    ps.executeUpdate();
+                    added++;
+                } catch (SQLException e) {
+                    System.err.println(e.getLocalizedMessage());
+                    System.out.println("conflicting ratings, trying again");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
         }
     }
 }
