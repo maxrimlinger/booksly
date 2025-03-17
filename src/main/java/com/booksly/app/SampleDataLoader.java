@@ -159,4 +159,25 @@ public class SampleDataLoader {
             return null;
         }
     }
+
+    public void loadGenres() {
+        try (Scanner in = new Scanner(new File("./data/genres.txt"))) {
+            List<String> genreNames = new ArrayList<>();
+
+            while (in.hasNext()) {
+                genreNames.add(in.nextLine().strip());
+            }
+
+            PreparedStatement ps = this.connection.prepareStatement("insert into genre values (DEFAULT, ?)");
+
+            for (String genreName : genreNames) {
+                ps.setString(1, genreName);
+
+                ps.executeUpdate();
+            }
+        } catch (Exception e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
+    }
 }

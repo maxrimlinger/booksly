@@ -1,0 +1,20 @@
+Fantasy
+Science Fiction
+Mystery
+Thriller
+Romance
+Horror
+Historical Fiction
+Drama
+Comedy
+Action
+Adventure
+Dystopian
+Supernatural
+Crime
+Western
+Slice of Life
+Psychological Thriller
+Post-Apocalyptic
+Magical Realism
+Gothic Fiction
