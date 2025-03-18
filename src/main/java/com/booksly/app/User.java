@@ -440,7 +440,7 @@ public class User {
     public void addBookToCollection(int collectionId, int bookId){
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "insert into collection-book(user_id, collection_id, book_id) values (?, ?, ?)"
+                    "insert into collection_book(user_id, collection_id, book_id) values (?, ?, ?)"
             );
             ps.setInt(1, this.userId);
             ps.setInt(2, collectionId);
@@ -456,7 +456,7 @@ public class User {
     public void removeBookFromCollection(int collectionId, int bookId){
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "delete from collection-book where user_id = ? and collection_id = ? and bookId = ?"
+                    "delete from collection_book where user_id = ? and collection_id = ? and bookId = ?"
             );
             ps.setInt(1, this.userId);
             ps.setInt(2, collectionId);
@@ -471,17 +471,29 @@ public class User {
     }
 
 
-    // list all collection name + id
-    public void listIDCollections(){
+    // Users can see the list of all their collections by name in ascending order. The list must show the following information per collection:
+    //- The collection’s name
+    //- The number of books in the collection
+    //- The total length of the books (in pages) in the collection
+
+    // WIP
+
+    public void listCollections(){
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select * from collection where user_id = ?"
+//                    "select c.collection.name, c.collection_id, sum  from " +
+//                            "collection c join collection-book cb on c.user_id = cb.user_id " +
+//                            "join book b on cb.book_id = b.book_id order by name asc "
+
+                    //"select sum(length), count(book_id) from (book b join collection-book cb on b.book_id = cb.book_id) "
+                    "select count(cb.book_id) from collection c join collection_book cb on c.collection_id = cb.collection_id where c.user_id = ?"
+
             );
             ps.setInt(1, this.userId);
 
             ResultSet result = ps.executeQuery();
             while(result.next()){
-                System.out.println(result.getInt("collection_id") + "\t" + result.getString("name"));
+                System.out.println(result.getInt(1));
             }
         }
         catch (SQLException e){
