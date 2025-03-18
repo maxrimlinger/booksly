@@ -319,6 +319,12 @@ public class App {
             String input = INPUT.nextLine().strip();
 
             if (input.equals("quit")) {
+                try {
+                    this.connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
                 System.exit(0);
             }
 
