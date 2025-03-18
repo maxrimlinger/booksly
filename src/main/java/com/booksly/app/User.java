@@ -472,7 +472,7 @@ public class User {
 
 
     // list all collection name + id
-    public void listCollections(){
+    public void listIDCollections(){
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
                     "select * from collection where user_id = ?"

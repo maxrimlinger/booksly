@@ -282,8 +282,8 @@ public class App {
         this.user.createCollection(name);
     }
 
-    private void collectionListCommand(){
-        this.user.listCollections();
+    private void collectionListIDCommand(){
+        this.user.listIDCollections();
     }
 
     private void collectionAddCommand(int collectionId, int bookId){
@@ -350,8 +350,8 @@ public class App {
                 Timestamp endTime = Timestamp.valueOf(args[6]);
 
                 bookReadCommand(bookId, startPage, endPage, startTime, endTime);
-            } else if (args[0].equals("collection") && args[1].equals("list")) {
-                collectionListCommand();
+            } else if (args[0].equals("collection") && args[1].equals("listID")) {
+                collectionListIDCommand();
             } else if (args[0].equals("collection") && args[1].equals("create")) {
                 collectionCreateCommand(args[2]);
             } else if (args[0].equals("collection") && args[1].equals("add")) {
