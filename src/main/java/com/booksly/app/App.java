@@ -28,6 +28,7 @@ public class App {
     private static final String REMOTE_DB_HOST = "127.0.0.1";
 
     private Connection connection;
+    private Session session;
     private User user;
 
     private static final Scanner INPUT = new Scanner(System.in);
@@ -38,16 +39,16 @@ public class App {
 
     private int tunnel(String username, String password) throws JSchException {
         JSch jsch = new JSch();
-        Session session = jsch.getSession(username, REMOTE_MACHINE_HOST, SSH_TUNNEL_PORT);
-        session.setPassword(password);
+        this.session = jsch.getSession(username, REMOTE_MACHINE_HOST, SSH_TUNNEL_PORT);
+        this.session.setPassword(password);
 
         Properties config = new Properties();
         config.put("StrictHostKeyChecking", "no");
 
-        session.setConfig(config);
-        session.connect();
+        this.session.setConfig(config);
+        this.session.connect();
 
-        return session.setPortForwardingL(LOCAL_FORWARD_PORT, REMOTE_DB_HOST, REMOTE_DB_PORT);
+        return this.session.setPortForwardingL(LOCAL_FORWARD_PORT, REMOTE_DB_HOST, REMOTE_DB_PORT);
     }
 
     private static void logError(String message, Exception e) {
@@ -278,37 +279,92 @@ public class App {
         this.user.readBook(bookId, startPage, endPage, startTime, endTime);
     }
 
+    private void collectionCreateCommand(String name) {
+        this.user.createCollection(name);
+    }
+
+    private void collectionListIDCommand() {
+        this.user.listIDCollections();
+    }
+
+    private void collectionAddCommand(int collectionId, int bookId) {
+        if (user.collectionExists(collectionId) && Book.doesBookExist(bookId))
+            this.user.addBookToCollection(collectionId, bookId);
+        else {
+            System.out.println("Non existent collection or book");
+        }
+    }
+
+    private void collectionRemoveCommand(int collectionId, int bookId) {
+        if (user.collectionExists(collectionId) && Book.doesBookExist(bookId))
+            this.user.removeBookFromCollection(collectionId, bookId);
+        else {
+            System.out.println("Non existent collection or book");
+        }
+    }
+
+    private void collectionDeleteCommand(int collectionId) {
+        if (user.collectionExists(collectionId)) {
+            this.user.deleteCollection(collectionId);
+        } else {
+            System.out.println("Non existent collection");
+        }
+    }
+
+    private void collectionRenameCommand(int collectionId, String name) {
+        if (user.collectionExists(collectionId)) {
+            this.user.renameCollection(collectionId, name);
+        }
+    }
+
     private void executeCommand(String[] args) {
-        if (args[0].equals("signup")) {
-            signupCommand();
-        } else if (args[0].equals("login")) {
-            loginCommand(args[1], args[2]);
-        } else if (args[0].equals("whoami")) {
-            if (this.user == null) {
-                System.out.println("You are not currently logged in");
-            } else {
-                System.out.println(
-                        "You are logged in as " + this.user.getUsername() + " (id = " + this.user.getUserId() + ")");
+        try {
+            if (args[0].equals("signup")) {
+                signupCommand();
+            } else if (args[0].equals("login")) {
+                loginCommand(args[1], args[2]);
+            } else if (args[0].equals("whoami")) {
+                if (this.user == null) {
+                    System.out.println("You are not currently logged in");
+                } else {
+                    System.out.println(
+                            "You are logged in as " + this.user.getUsername() + " (id = " + this.user.getUserId()
+                                    + ")");
+                }
+            } else if (args[0].equals("user") && args[1].equals("search")) {
+                userSearchCommand(args[2]);
+            } else if (args[0].equals("user") && args[1].equals("follow")) {
+                userFollowCommand(args[2]);
+            } else if (args[0].equals("user") && args[1].equals("unfollow")) {
+                userUnfollowCommand(args[2]);
+            } else if (args[0].equals("book") && args[1].equals("rate")) {
+                int bookId = Integer.parseInt(args[2]);
+                int rating = Integer.parseInt(args[3]);
+
+                bookRateCommand(bookId, rating);
+            } else if (args[0].equals("book") && args[1].equals("read")) {
+                int bookId = Integer.parseInt(args[2]);
+                int startPage = Integer.parseInt(args[3]);
+                int endPage = Integer.parseInt(args[4]);
+                Timestamp startTime = Timestamp.valueOf(args[5]);
+                Timestamp endTime = Timestamp.valueOf(args[6]);
+
+                bookReadCommand(bookId, startPage, endPage, startTime, endTime);
+            } else if (args[0].equals("collection") && args[1].equals("listID")) {
+                collectionListIDCommand();
+            } else if (args[0].equals("collection") && args[1].equals("create")) {
+                collectionCreateCommand(args[2]);
+            } else if (args[0].equals("collection") && args[1].equals("add")) {
+                collectionAddCommand(Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+            } else if (args[0].equals("collection") && args[1].equals("remove")) {
+                collectionRemoveCommand(Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+            } else if (args[0].equals("collection") && args[1].equals("delete")) {
+                collectionDeleteCommand(Integer.parseInt(args[2]));
+            } else if (args[0].equals("collection") && args[1].equals("rename")) {
+                collectionRenameCommand(Integer.parseInt(args[2]), args[3]);
             }
-        } else if (args[0].equals("user") && args[1].equals("search")) {
-            userSearchCommand(args[2]);
-        } else if (args[0].equals("user") && args[1].equals("follow")) {
-            userFollowCommand(args[2]);
-        } else if (args[0].equals("user") && args[1].equals("unfollow")) {
-            userUnfollowCommand(args[2]);
-        } else if (args[0].equals("book") && args[1].equals("rate")) {
-            int bookId = Integer.parseInt(args[2]);
-            int rating = Integer.parseInt(args[3]);
-
-            bookRateCommand(bookId, rating);
-        } else if (args[0].equals("book") && args[1].equals("read")) {
-            int bookId = Integer.parseInt(args[2]);
-            int startPage = Integer.parseInt(args[3]);
-            int endPage = Integer.parseInt(args[4]);
-            Timestamp startTime = Timestamp.valueOf(args[5]);
-            Timestamp endTime = Timestamp.valueOf(args[6]);
-
-            bookReadCommand(bookId, startPage, endPage, startTime, endTime);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Missing arguments for previous command");
         }
     }
 
@@ -319,6 +375,18 @@ public class App {
             String input = INPUT.nextLine().strip();
 
             if (input.equals("quit")) {
+                if (this.session != null && this.session.isConnected()) {
+                    this.session.disconnect();
+                }
+
+                try {
+                    if (this.connection != null && !this.connection.isClosed()) {
+                        this.connection.close();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
                 System.exit(0);
             }
 
