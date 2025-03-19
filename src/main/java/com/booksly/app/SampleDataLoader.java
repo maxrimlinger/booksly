@@ -1,6 +1,7 @@
 package com.booksly.app;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -435,6 +436,78 @@ public class SampleDataLoader {
             ps.setTimestamp(6, endTime);
 
             ps.executeUpdate();
+        }
+    }
+
+    public void loadSampleCollections() throws SQLException {
+        List<String> adverbs = new ArrayList<>();
+        List<String> adjectives = new ArrayList<>();
+        List<String> books = new ArrayList<>();
+
+        try {
+            Scanner adverbScanner = new Scanner(new File("./data/collections/adverbs.txt"));
+            Scanner adjectiveScanner = new Scanner(new File("./data/collections/adjectives.txt"));
+            Scanner bookScanner = new Scanner(new File("./data/collections/books.txt"));
+
+            while (adverbScanner.hasNext())
+                adverbs.add(adverbScanner.nextLine().strip());
+            while (adjectiveScanner.hasNext())
+                adjectives.add(adjectiveScanner.nextLine().strip());
+            while (bookScanner.hasNext())
+                books.add(bookScanner.nextLine().strip());
+
+            adverbScanner.close();
+            adjectiveScanner.close();
+            bookScanner.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("couldn't load file");
+            System.exit(1);
+        }
+
+        String query = "insert into collection(collection_id, user_id, name) values (DEFAULT, ?, ?)";
+
+        PreparedStatement ps = this.connection.prepareStatement(query);
+
+        Random rng = new Random();
+
+        for (String book : books) {
+            for (String adjective : adjectives) {
+                for (String adverb : adverbs) {
+                    String collectionName = adverb + " " + adjective + " " + book;
+
+                    int userId = rng.nextInt(1, 10001);
+
+                    ps.setInt(1, userId);
+                    ps.setString(2, collectionName);
+
+                    ps.executeUpdate();
+                }
+            }
+        }
+    }
+
+    public void loadSampleCollectionBooks() throws SQLException {
+        String query = "insert into collection_book(collection_id, book_id) values (?, ?)";
+
+        PreparedStatement ps = this.connection.prepareStatement(query);
+
+        Random rng = new Random();
+
+        int added = 0;
+
+        while (added < 25000) {
+            int collectionId = rng.nextInt(1, 4001);
+            int bookId = rng.nextInt(1, 10001);
+
+            ps.setInt(1, collectionId);
+            ps.setInt(2, bookId);
+
+            try {
+                ps.executeUpdate();
+                added += 1;
+            } catch (SQLException e) {
+                System.out.println("conflict, trying again");
+            }
         }
     }
 }
