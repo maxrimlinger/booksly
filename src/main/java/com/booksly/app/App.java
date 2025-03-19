@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Scanner;
 
 import com.jcraft.jsch.JSchException;
@@ -279,6 +280,15 @@ public class App {
         this.user.readBook(bookId, startPage, endPage, startTime, endTime);
     }
 
+    private void bookReadRandomCommand(Timestamp startTime, Timestamp endTime) {
+        int randomId = Book.getRandomBookId();
+        Book book = new Book(randomId);
+        Random rand = new Random();
+        int randStartPage = rand.nextInt(1, book.getLength());
+        int randEndPage = rand.nextInt(randStartPage, book.getLength());
+        bookReadCommand(randomId, randStartPage, randEndPage, startTime, endTime);
+    }
+
     private void collectionCreateCommand(String name) {
         this.user.createCollection(name);
     }
@@ -343,13 +353,20 @@ public class App {
 
                 bookRateCommand(bookId, rating);
             } else if (args[0].equals("book") && args[1].equals("read")) {
-                int bookId = Integer.parseInt(args[2]);
-                int startPage = Integer.parseInt(args[3]);
-                int endPage = Integer.parseInt(args[4]);
-                Timestamp startTime = Timestamp.valueOf(args[5]);
-                Timestamp endTime = Timestamp.valueOf(args[6]);
+                if (args[2].equals("random")) {
+                    Timestamp startTime = Timestamp.valueOf(args[3]);
+                    Timestamp endTime = Timestamp.valueOf(args[4]);
 
-                bookReadCommand(bookId, startPage, endPage, startTime, endTime);
+                    bookReadRandomCommand(startTime, endTime);
+                } else {
+                    int bookId = Integer.parseInt(args[2]);
+                    int startPage = Integer.parseInt(args[3]);
+                    int endPage = Integer.parseInt(args[4]);
+                    Timestamp startTime = Timestamp.valueOf(args[5]);
+                    Timestamp endTime = Timestamp.valueOf(args[6]);
+
+                    bookReadCommand(bookId, startPage, endPage, startTime, endTime);
+                }
             } else if (args[0].equals("collection") && args[1].equals("listID")) {
                 collectionListIDCommand();
             } else if (args[0].equals("collection") && args[1].equals("create")) {
@@ -362,6 +379,8 @@ public class App {
                 collectionDeleteCommand(Integer.parseInt(args[2]));
             } else if (args[0].equals("collection") && args[1].equals("rename")) {
                 collectionRenameCommand(Integer.parseInt(args[2]), args[3]);
+            } else {
+                System.out.println("Unknown command");
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Missing arguments for previous command");
