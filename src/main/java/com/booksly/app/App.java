@@ -230,6 +230,20 @@ public class App {
         System.out.println("You are no longer following " + username);
     }
 
+    private void bookSearchCommand() throws SQLException {
+        System.out.print("field name: ");
+        String fieldName = INPUT.nextLine().strip();
+
+        System.out.print("search term: ");
+        String searchTerm = INPUT.nextLine().strip();
+
+        System.out.print("sort key: ");
+        String sortKey = INPUT.nextLine().strip();
+
+        System.out.print("asc/desc: ");
+        String ordering = INPUT.nextLine().strip();
+    }
+
     private void bookRateCommand(int bookId, int rating) {
         if (rating <= 0 || rating > 5) {
             System.out.println("Rating must be between 1 and 5, inclusive");
@@ -337,6 +351,8 @@ public class App {
                 userFollowCommand(args[2]);
             } else if (args[0].equals("user") && args[1].equals("unfollow")) {
                 userUnfollowCommand(args[2]);
+            } else if (args[0].equals("book") && args[1].equals("search")) {
+                bookSearchCommand();
             } else if (args[0].equals("book") && args[1].equals("rate")) {
                 int bookId = Integer.parseInt(args[2]);
                 int rating = Integer.parseInt(args[3]);
