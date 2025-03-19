@@ -78,7 +78,7 @@ public class App {
         return false;
     }
 
-    private void signupCommand() {
+    private void signupCommand() throws SQLException {
         String username;
 
         while (true) {
@@ -184,7 +184,7 @@ public class App {
         }
     }
 
-    private void userSearchCommand(String email) {
+    private void userSearchCommand(String email) throws SQLException {
         User foundUser = User.getUserByEmail(email);
 
         if (foundUser != null) {
@@ -197,7 +197,7 @@ public class App {
         }
     }
 
-    private void userFollowCommand(String username) {
+    private void userFollowCommand(String username) throws SQLException {
         if (!User.doesUserExist(username)) {
             System.out.println("No user found with that username");
             return;
@@ -213,7 +213,7 @@ public class App {
         System.out.println("You are now following " + username);
     }
 
-    private void userUnfollowCommand(String username) {
+    private void userUnfollowCommand(String username) throws SQLException {
         if (!User.doesUserExist(username)) {
             System.out.println("No user found with that username");
             return;
@@ -229,7 +229,7 @@ public class App {
         System.out.println("You are no longer following " + username);
     }
 
-    private void bookRateCommand(int bookId, int rating) {
+    private void bookRateCommand(int bookId, int rating) throws SQLException {
         if (rating <= 0 || rating > 5) {
             System.out.println("Rating must be between 1 and 5, inclusive");
             return;
@@ -247,7 +247,8 @@ public class App {
         }
     }
 
-    private void bookReadCommand(int bookId, int startPage, int endPage, Timestamp startTime, Timestamp endTime) {
+    private void bookReadCommand(int bookId, int startPage, int endPage, Timestamp startTime, Timestamp endTime)
+            throws SQLException {
         if (startPage <= 0) {
             System.out.println("Start page must be at least 1");
             return;
@@ -278,45 +279,43 @@ public class App {
         this.user.readBook(bookId, startPage, endPage, startTime, endTime);
     }
 
-    private void collectionCreateCommand(String name){
+    private void collectionCreateCommand(String name) throws SQLException {
         this.user.createCollection(name);
     }
 
-    private void collectionListIDCommand(){
-        this.user.listIDCollections();
+    private void collectionListCommand() throws SQLException {
+        this.user.listCollections();
     }
 
-    private void collectionAddCommand(int collectionId, int bookId){
-        if(user.collectionExists(collectionId) && Book.doesBookExist(bookId))
+    private void collectionAddCommand(int collectionId, int bookId) throws SQLException {
+        if (user.collectionExists(collectionId) && Book.doesBookExist(bookId))
             this.user.addBookToCollection(collectionId, bookId);
-        else{
-            System.out.println("Non existent collection or book");
-        }
-    }
-
-    private void collectionRemoveCommand(int collectionId, int bookId){
-        if(user.collectionExists(collectionId) && Book.doesBookExist(bookId))
-            this.user.removeBookFromCollection(collectionId, bookId);
-        else{
-            System.out.println("Non existent collection or book");
-        }
-    }
-
-    private void collectionDeleteCommand(int collectionId){
-        if (user.collectionExists(collectionId)){
-            this.user.deleteCollection(collectionId);
-        }
         else {
+            System.out.println("Non existent collection or book");
+        }
+    }
+
+    private void collectionRemoveCommand(int collectionId, int bookId) throws SQLException {
+        if (user.collectionExists(collectionId) && Book.doesBookExist(bookId))
+            this.user.removeBookFromCollection(collectionId, bookId);
+        else {
+            System.out.println("Non existent collection or book");
+        }
+    }
+
+    private void collectionDeleteCommand(int collectionId) throws SQLException {
+        if (user.collectionExists(collectionId)) {
+            this.user.deleteCollection(collectionId);
+        } else {
             System.out.println("Non existent collection");
         }
     }
 
-    private void collectionRenameCommand(int collectionId, String name){
-        if (user.collectionExists(collectionId)){
+    private void collectionRenameCommand(int collectionId, String name) throws SQLException {
+        if (user.collectionExists(collectionId)) {
             this.user.renameCollection(collectionId, name);
         }
     }
-
 
     private void executeCommand(String[] args) {
         try {
@@ -329,7 +328,8 @@ public class App {
                     System.out.println("You are not currently logged in");
                 } else {
                     System.out.println(
-                            "You are logged in as " + this.user.getUsername() + " (id = " + this.user.getUserId() + ")");
+                            "You are logged in as " + this.user.getUsername() + " (id = " + this.user.getUserId()
+                                    + ")");
                 }
             } else if (args[0].equals("user") && args[1].equals("search")) {
                 userSearchCommand(args[2]);
@@ -350,21 +350,24 @@ public class App {
                 Timestamp endTime = Timestamp.valueOf(args[6]);
 
                 bookReadCommand(bookId, startPage, endPage, startTime, endTime);
-            } else if (args[0].equals("collection") && args[1].equals("listID")) {
-                collectionListIDCommand();
+            } else if (args[0].equals("collection") && args[1].equals("list")) {
+                collectionListCommand();
             } else if (args[0].equals("collection") && args[1].equals("create")) {
                 collectionCreateCommand(args[2]);
             } else if (args[0].equals("collection") && args[1].equals("add")) {
                 collectionAddCommand(Integer.parseInt(args[2]), Integer.parseInt(args[3]));
             } else if (args[0].equals("collection") && args[1].equals("remove")) {
                 collectionRemoveCommand(Integer.parseInt(args[2]), Integer.parseInt(args[3]));
-            } else if (args[0].equals("collection") && args[1].equals("delete")){
+            } else if (args[0].equals("collection") && args[1].equals("delete")) {
                 collectionDeleteCommand(Integer.parseInt(args[2]));
-            } else if (args[0].equals("collection") && args[1].equals("rename")){
+            } else if (args[0].equals("collection") && args[1].equals("rename")) {
                 collectionRenameCommand(Integer.parseInt(args[2]), args[3]);
             }
-        } catch (ArrayIndexOutOfBoundsException e){
+        } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Missing arguments for previous command");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 
