@@ -266,6 +266,7 @@ public class App {
 
         if (endTime.before(startTime)) {
             System.out.println("End time must be at least start time");
+            return;
         }
 
         if (!Book.doesBookExist(bookId)) {
