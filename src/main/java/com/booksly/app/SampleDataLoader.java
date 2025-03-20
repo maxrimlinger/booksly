@@ -1,6 +1,7 @@
 package com.booksly.app;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -11,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -400,6 +402,112 @@ public class SampleDataLoader {
             }
         } catch (SQLException e) {
             System.err.println(e.getLocalizedMessage());
+        }
+    }
+
+    public void loadSampleSessions() throws SQLException {
+        PreparedStatement ps = connection
+                .prepareStatement(
+                        "insert into session(session_id, user_id, book_id, start_page, end_page, start_time, end_time) values (DEFAULT, ?, ?, ?, ?, ?, ?)");
+
+        Random rng = new Random();
+
+        for (int i = 1; i <= 25000; i++) {
+            int userId = rng.nextInt(1, 10001);
+            int bookId = rng.nextInt(1, 10001);
+
+            Book book = new Book(bookId);
+            int length = book.getLength();
+
+            int startPage = rng.nextInt(1, length + 1);
+            int endPage = rng.nextInt(startPage, length + 1);
+
+            Timestamp startTime = getRandomTimestamp(2020, 2024);
+            long startSeconds = startTime.toInstant().getEpochSecond();
+            // between 5 minutes and 5 hours
+            int duration = rng.nextInt(300, 18001);
+            Timestamp endTime = Timestamp.from(Instant.ofEpochSecond(startSeconds + duration));
+
+            ps.setInt(1, userId);
+            ps.setInt(2, bookId);
+            ps.setInt(3, startPage);
+            ps.setInt(4, endPage);
+            ps.setTimestamp(5, startTime);
+            ps.setTimestamp(6, endTime);
+
+            ps.executeUpdate();
+        }
+    }
+
+    public void loadSampleCollections() throws SQLException {
+        List<String> adverbs = new ArrayList<>();
+        List<String> adjectives = new ArrayList<>();
+        List<String> books = new ArrayList<>();
+
+        try {
+            Scanner adverbScanner = new Scanner(new File("./data/collections/adverbs.txt"));
+            Scanner adjectiveScanner = new Scanner(new File("./data/collections/adjectives.txt"));
+            Scanner bookScanner = new Scanner(new File("./data/collections/books.txt"));
+
+            while (adverbScanner.hasNext())
+                adverbs.add(adverbScanner.nextLine().strip());
+            while (adjectiveScanner.hasNext())
+                adjectives.add(adjectiveScanner.nextLine().strip());
+            while (bookScanner.hasNext())
+                books.add(bookScanner.nextLine().strip());
+
+            adverbScanner.close();
+            adjectiveScanner.close();
+            bookScanner.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("couldn't load file");
+            System.exit(1);
+        }
+
+        String query = "insert into collection(collection_id, user_id, name) values (DEFAULT, ?, ?)";
+
+        PreparedStatement ps = this.connection.prepareStatement(query);
+
+        Random rng = new Random();
+
+        for (String book : books) {
+            for (String adjective : adjectives) {
+                for (String adverb : adverbs) {
+                    String collectionName = adverb + " " + adjective + " " + book;
+
+                    int userId = rng.nextInt(1, 10001);
+
+                    ps.setInt(1, userId);
+                    ps.setString(2, collectionName);
+
+                    ps.executeUpdate();
+                }
+            }
+        }
+    }
+
+    public void loadSampleCollectionBooks() throws SQLException {
+        String query = "insert into collection_book(collection_id, book_id) values (?, ?)";
+
+        PreparedStatement ps = this.connection.prepareStatement(query);
+
+        Random rng = new Random();
+
+        int added = 0;
+
+        while (added < 25000) {
+            int collectionId = rng.nextInt(1, 4001);
+            int bookId = rng.nextInt(1, 10001);
+
+            ps.setInt(1, collectionId);
+            ps.setInt(2, bookId);
+
+            try {
+                ps.executeUpdate();
+                added += 1;
+            } catch (SQLException e) {
+                System.out.println("conflict, trying again");
+            }
         }
     }
 }

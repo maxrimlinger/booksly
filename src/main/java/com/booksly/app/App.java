@@ -423,14 +423,9 @@ public class App {
         }
 
         User.setConnection(connection);
+        Book.setConnection(connection);
 
         inputLoop();
-
-        // SampleDataLoader loader = new SampleDataLoader(this.connection);
-
-        // loader.loadSampleFollows();
-
-        // System.out.println("done");
     }
 
     public static void main(String[] args) {
