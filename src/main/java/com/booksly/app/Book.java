@@ -3,6 +3,7 @@ package com.booksly.app;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 public class Book {
@@ -32,6 +33,24 @@ public class Book {
         }
 
         return false;
+    }
+
+    public static int getRandomBookId() {
+        try {
+            PreparedStatement ps = CONNECTION
+                    .prepareStatement("select book_id from book order by random() limit 1");
+
+            ResultSet result = ps.executeQuery();
+
+            result.next();
+
+            return result.getInt("book_id");
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
+
+        return -1;
     }
 
     public Book(int bookId) {
