@@ -389,9 +389,9 @@ public class User {
         PreparedStatement ps = CONNECTION.prepareStatement(
                 "update collection set name = ? where user_id = ? and collection_id = ?");
 
-        ps.setInt(1, collectionId);
+        ps.setInt(3, collectionId);
         ps.setInt(2, this.userId);
-        ps.setString(3, name);
+        ps.setString(1, name);
 
         ps.executeUpdate();
     }
