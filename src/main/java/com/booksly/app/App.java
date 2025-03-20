@@ -201,7 +201,7 @@ public class App {
         }
     }
 
-    private void userFollowCommand(String username) {
+    private void userFollowCommand(String username) throws SQLException {
         if (username.equals(this.user.getUsername())) {
             System.out.println("You can't follow yourself!");
             return;
@@ -422,16 +422,17 @@ public class App {
         this.user.readBook(bookId, startPage, endPage, startTime, endTime);
     }
 
-    private void bookReadRandomCommand(Timestamp startTime, Timestamp endTime) {
+    private void bookReadRandomCommand(Timestamp startTime, Timestamp endTime) throws SQLException {
         int randomId = Book.getRandomBookId();
         Book book = new Book(randomId);
         Random rand = new Random();
         int randStartPage = rand.nextInt(1, book.getLength());
         int randEndPage = rand.nextInt(randStartPage, book.getLength());
+
         bookReadCommand(randomId, randStartPage, randEndPage, startTime, endTime);
     }
 
-    private void collectionCreateCommand(String name)  throws SQLException {
+    private void collectionCreateCommand(String name) throws SQLException {
         this.user.createCollection(name);
     }
 
