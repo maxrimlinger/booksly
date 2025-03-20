@@ -354,16 +354,16 @@ public class App {
                 bookRateCommand(bookId, rating);
             } else if (args[0].equals("book") && args[1].equals("read")) {
                 if (args[2].equals("random")) {
-                    Timestamp startTime = Timestamp.valueOf(args[3]);
-                    Timestamp endTime = Timestamp.valueOf(args[4]);
+                    Timestamp startTime = Timestamp.valueOf(args[3].replace("T", " "));
+                    Timestamp endTime = Timestamp.valueOf(args[4].replace("T", " "));
 
                     bookReadRandomCommand(startTime, endTime);
                 } else {
                     int bookId = Integer.parseInt(args[2]);
                     int startPage = Integer.parseInt(args[3]);
                     int endPage = Integer.parseInt(args[4]);
-                    Timestamp startTime = Timestamp.valueOf(args[5]);
-                    Timestamp endTime = Timestamp.valueOf(args[6]);
+                    Timestamp startTime = Timestamp.valueOf(args[5].replace("T", " "));
+                    Timestamp endTime = Timestamp.valueOf(args[6].replace("T", " "));
 
                     bookReadCommand(bookId, startPage, endPage, startTime, endTime);
                 }
