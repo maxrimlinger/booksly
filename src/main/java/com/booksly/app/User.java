@@ -316,20 +316,18 @@ public class User {
 
     public void addBookToCollection(int collectionId, int bookId) throws SQLException {
         PreparedStatement ps = CONNECTION.prepareStatement(
-                "insert into collection_book(user_id, collection_id, book_id) values (?, ?, ?)");
-        ps.setInt(1, this.userId);
-        ps.setInt(2, collectionId);
-        ps.setInt(3, bookId);
+                "insert into collection_book(collection_id, book_id) values (?, ?)");
+        ps.setInt(1, collectionId);
+        ps.setInt(2, bookId);
 
         ps.executeUpdate();
     }
 
     public void removeBookFromCollection(int collectionId, int bookId) throws SQLException {
         PreparedStatement ps = CONNECTION.prepareStatement(
-                "delete from collection_book where user_id = ? and collection_id = ? and bookId = ?");
-        ps.setInt(1, this.userId);
-        ps.setInt(2, collectionId);
-        ps.setInt(3, bookId);
+                "delete from collection_book where collection_id = ? and book_id = ?");
+        ps.setInt(1, collectionId);
+        ps.setInt(2, bookId);
 
         ps.executeUpdate();
     }
