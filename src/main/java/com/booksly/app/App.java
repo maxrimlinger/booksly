@@ -2,12 +2,14 @@ package com.booksly.app;
 
 import java.io.FileNotFoundException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Scanner;
@@ -80,7 +82,7 @@ public class App {
         return false;
     }
 
-    private void signupCommand() {
+    private void signupCommand() throws SQLException {
         String username;
 
         while (true) {
@@ -186,7 +188,7 @@ public class App {
         }
     }
 
-    private void userSearchCommand(String email) {
+    private void userSearchCommand(String email) throws SQLException {
         User foundUser = User.getUserByEmail(email);
 
         if (foundUser != null) {
@@ -220,7 +222,7 @@ public class App {
         System.out.println("You are now following " + username);
     }
 
-    private void userUnfollowCommand(String username) {
+    private void userUnfollowCommand(String username) throws SQLException {
         if (!User.doesUserExist(username)) {
             System.out.println("No user found with that username");
             return;
@@ -236,7 +238,140 @@ public class App {
         System.out.println("You are no longer following " + username);
     }
 
-    private void bookRateCommand(int bookId, int rating) {
+    private static final List<String> VALID_FIELD_NAMES = List.of("title", "release date", "author", "publisher",
+            "genre");
+
+    private static final List<String> VALID_SORT_KEYS = List.of("title", "release year", "publisher", "genre");
+
+    private void bookSearchCommand() throws SQLException {
+        String fieldName = null;
+
+        while (true) {
+            System.out.print("field name: ");
+            fieldName = INPUT.nextLine().strip();
+
+            if (VALID_FIELD_NAMES.contains(fieldName)) {
+                break;
+            }
+
+            System.out.println("Invalid field name, please try again");
+        }
+
+        System.out.print("search term: ");
+        String searchTerm = INPUT.nextLine().strip();
+
+        String sortKey = null;
+
+        while (true) {
+            System.out.print("sort key: ");
+            sortKey = INPUT.nextLine().strip();
+
+            if (VALID_SORT_KEYS.contains(sortKey) || sortKey.isEmpty()) {
+                break;
+            }
+
+            System.out.println("Invalid sort key, please try again");
+        }
+
+        if (sortKey.isEmpty()) {
+            sortKey = "title";
+        }
+
+        String ordering = null;
+
+        while (true) {
+            System.out.print("asc/desc: ");
+            ordering = INPUT.nextLine().strip();
+
+            if (ordering.equals("asc") || ordering.equals("desc") || ordering.isEmpty()) {
+                break;
+            }
+
+            System.out.println("Invalid ordering, please try again");
+        }
+
+        if (ordering.isEmpty()) {
+            ordering = "asc";
+        }
+
+        String query = "select b.book_id from book b where ";
+
+        String suffix = " order by ";
+
+        if (sortKey.equals("title")) {
+            suffix += "b.title ";
+        } else if (sortKey.equals("release year")) {
+            suffix += "extract(year from b.release_date) ";
+        } else if (sortKey.equals("publisher")) {
+            suffix += " (select c.name\r\n" + //
+                    "from contributor c\r\n" + //
+                    "inner join book_publisher bp\r\n" + //
+                    "on c.contributor_id = bp.publisher_id\r\n" + //
+                    "where bp.book_id = b.book_id\r\n" + //
+                    "order by c.name\r\n" + //
+                    "limit 1) ";
+        } else if (sortKey.equals("genre")) {
+            suffix += " (select g.name\r\n" + //
+                    "from genre g\r\n" + //
+                    "inner join book_genre bg\r\n" + //
+                    "on g.genre_id = bg.genre_id\r\n" + //
+                    "where bg.book_id = b.book_id\r\n" + //
+                    "order by g.name\r\n" + //
+                    "limit 1) ";
+        }
+
+        suffix += ordering;
+
+        PreparedStatement ps = null;
+
+        if (fieldName.equals("title")) {
+            query += "title = ?";
+            ps = this.connection.prepareStatement(query + suffix);
+            ps.setString(1, searchTerm);
+        } else if (fieldName.equals("release date")) {
+            query += "release_date = ?";
+            Date releaseDate = Date.valueOf(searchTerm);
+            ps = this.connection.prepareStatement(query + suffix);
+            ps.setDate(1, releaseDate);
+        } else if (fieldName.equals("author")) {
+            query += "b.book_id in\r\n" + //
+                    "(select ba.book_id\r\n" + //
+                    "from book_author ba inner join contributor c\r\n" + //
+                    "on ba.author_id = c.contributor_id\r\n" + //
+                    "where c.name = ?)";
+            ps = this.connection.prepareStatement(query + suffix);
+            ps.setString(1, searchTerm);
+        } else if (fieldName.equals("publisher")) {
+            query += "b.book_id in\r\n" + //
+                    "(select bp.book_id\r\n" + //
+                    "from book_publisher bp inner join contributor c\r\n" + //
+                    "on bp.publisher_id = c.contributor_id\r\n" + //
+                    "where c.name = ?)";
+            ps = this.connection.prepareStatement(query + suffix);
+            ps.setString(1, searchTerm);
+        } else if (fieldName.equals("genre")) {
+            query += "b.book_id in\r\n" + //
+                    "(select bg.book_id\r\n" + //
+                    "from book_genre bg inner join genre g\r\n" + //
+                    "on bg.genre_id = g.genre_id\r\n" + //
+                    "where g.name = ?)";
+            ps = this.connection.prepareStatement(query + suffix);
+            ps.setString(1, searchTerm);
+        }
+
+        ResultSet result = ps.executeQuery();
+
+        System.out.println();
+
+        while (result.next()) {
+            int bookId = result.getInt(1);
+
+            Book.displaySearchInformation(bookId);
+            System.out.println();
+        }
+    }
+
+    private void bookRateCommand(int bookId, int rating) throws SQLException {
         if (rating <= 0 || rating > 5) {
             System.out.println("Rating must be between 1 and 5, inclusive");
             return;
@@ -254,7 +389,8 @@ public class App {
         }
     }
 
-    private void bookReadCommand(int bookId, int startPage, int endPage, Timestamp startTime, Timestamp endTime) {
+    private void bookReadCommand(int bookId, int startPage, int endPage, Timestamp startTime, Timestamp endTime)
+            throws SQLException {
         if (startPage <= 0) {
             System.out.println("Start page must be at least 1");
             return;
@@ -295,15 +431,15 @@ public class App {
         bookReadCommand(randomId, randStartPage, randEndPage, startTime, endTime);
     }
 
-    private void collectionCreateCommand(String name) {
+    private void collectionCreateCommand(String name)  throws SQLException {
         this.user.createCollection(name);
     }
 
-    private void collectionListIDCommand() {
-        this.user.listIDCollections();
+    private void collectionListCommand() throws SQLException {
+        this.user.listCollections();
     }
 
-    private void collectionAddCommand(int collectionId, int bookId) {
+    private void collectionAddCommand(int collectionId, int bookId) throws SQLException {
         if (user.collectionExists(collectionId) && Book.doesBookExist(bookId))
             this.user.addBookToCollection(collectionId, bookId);
         else {
@@ -311,7 +447,7 @@ public class App {
         }
     }
 
-    private void collectionRemoveCommand(int collectionId, int bookId) {
+    private void collectionRemoveCommand(int collectionId, int bookId) throws SQLException {
         if (user.collectionExists(collectionId) && Book.doesBookExist(bookId))
             this.user.removeBookFromCollection(collectionId, bookId);
         else {
@@ -319,7 +455,7 @@ public class App {
         }
     }
 
-    private void collectionDeleteCommand(int collectionId) {
+    private void collectionDeleteCommand(int collectionId) throws SQLException {
         if (user.collectionExists(collectionId)) {
             this.user.deleteCollection(collectionId);
         } else {
@@ -327,7 +463,7 @@ public class App {
         }
     }
 
-    private void collectionRenameCommand(int collectionId, String name) {
+    private void collectionRenameCommand(int collectionId, String name) throws SQLException {
         if (user.collectionExists(collectionId)) {
             this.user.renameCollection(collectionId, name);
         }
@@ -353,6 +489,8 @@ public class App {
                 userFollowCommand(args[2]);
             } else if (args[0].equals("user") && args[1].equals("unfollow")) {
                 userUnfollowCommand(args[2]);
+            } else if (args[0].equals("book") && args[1].equals("search")) {
+                bookSearchCommand();
             } else if (args[0].equals("book") && args[1].equals("rate")) {
                 int bookId = Integer.parseInt(args[2]);
                 int rating = Integer.parseInt(args[3]);
@@ -373,8 +511,8 @@ public class App {
 
                     bookReadCommand(bookId, startPage, endPage, startTime, endTime);
                 }
-            } else if (args[0].equals("collection") && args[1].equals("listID")) {
-                collectionListIDCommand();
+            } else if (args[0].equals("collection") && args[1].equals("list")) {
+                collectionListCommand();
             } else if (args[0].equals("collection") && args[1].equals("create")) {
                 collectionCreateCommand(args[2]);
             } else if (args[0].equals("collection") && args[1].equals("add")) {
@@ -390,6 +528,9 @@ public class App {
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Missing arguments for previous command");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 

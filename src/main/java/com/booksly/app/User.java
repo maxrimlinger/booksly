@@ -15,107 +15,66 @@ public class User {
         CONNECTION = connection;
     }
 
-    public static int getUserId(String username) {
-        try {
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement(
-                            "select user_id from users where username = ?");
+    public static int getUserId(String username) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select user_id from users where username = ?");
 
-            ps.setString(1, username);
+        ps.setString(1, username);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getInt(1);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return -1;
+        return result.getInt(1);
     }
 
-    public static boolean doesUserExist(String username) {
-        try {
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement("select count(*) from users where username = ?");
+    public static boolean doesUserExist(String username) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select count(*) from users where username = ?");
 
-            ps.setString(1, username);
+        ps.setString(1, username);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getInt(1) == 1;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return false;
+        return result.getInt(1) == 1;
     }
 
-    public static User getUserByEmail(String email) {
-        try {
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement("select user_id from users where email = ?");
+    public static User getUserByEmail(String email) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select user_id from users where email = ?");
 
-            ps.setString(1, email);
+        ps.setString(1, email);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            if (result.next()) {
-                int userId = result.getInt(1);
+        result.next();
 
-                return new User(userId);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        int userId = result.getInt(1);
 
-        return null;
+        return new User(userId);
     }
 
-    public static boolean isUsernameTaken(String username) {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select count(*) from users where username = ?");
+    public static boolean isUsernameTaken(String username) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select count(*) from users where username = ?");
 
-            ps.setString(1, username);
+        ps.setString(1, username);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getInt(1) == 1;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return false;
+        return result.getInt(1) == 1;
     }
 
-    public static boolean isEmailTaken(String email) {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select count(*) from users where email = ?");
+    public static boolean isEmailTaken(String email) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select count(*) from users where email = ?");
 
-            ps.setString(1, email);
+        ps.setString(1, email);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getInt(1) == 1;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return false;
+        return result.getInt(1) == 1;
     }
 
     public User(int userId) {
@@ -126,124 +85,81 @@ public class User {
         return this.userId;
     }
 
-    public String getUsername() {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement("select username from users where user_id = ?");
+    public String getUsername() throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select username from users where user_id = ?");
 
-            ps.setInt(1, this.userId);
+        ps.setInt(1, this.userId);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getString(1);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return null;
+        return result.getString(1);
     }
 
-    public String getEmail() {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement("select email from users where user_id = ?");
+    public String getEmail() throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select email from users where user_id = ?");
 
-            ps.setInt(1, this.userId);
+        ps.setInt(1, this.userId);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getString(1);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return null;
+        return result.getString(1);
     }
 
-    public String getFirstName() {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement("select first_name from users where user_id = ?");
+    public String getFirstName() throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select first_name from users where user_id = ?");
 
-            ps.setInt(1, this.userId);
+        ps.setInt(1, this.userId);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getString(1);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return null;
+        return result.getString(1);
     }
 
-    public String getLastName() {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement("select last_name from users where user_id = ?");
+    public String getLastName() throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select last_name from users where user_id = ?");
 
-            ps.setInt(1, this.userId);
+        ps.setInt(1, this.userId);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getString(1);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return null;
+        return result.getString(1);
     }
 
-    public String getPasswordHash() {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement("select password_hash from users where user_id = ?");
+    public String getPasswordHash() throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement("select password_hash from users where user_id = ?");
 
-            ps.setInt(1, this.userId);
+        ps.setInt(1, this.userId);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getString(1);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return null;
+        return result.getString(1);
     }
 
-    public void addAccess() {
-        try {
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement(
-                            "insert into user_access(access_id, user_id, access_time) values (DEFAULT, ?, ?)");
+    public void addAccess() throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("insert into user_access(access_id, user_id, access_time) values (DEFAULT, ?, ?)");
 
-            Timestamp now = Timestamp.from(Instant.now());
+        Timestamp now = Timestamp.from(Instant.now());
 
-            ps.setInt(1, this.userId);
-            ps.setTimestamp(2, now);
+        ps.setInt(1, this.userId);
+        ps.setTimestamp(2, now);
 
-            ps.executeUpdate();
+        ps = CONNECTION.prepareStatement("update users set last_access_date = ? where user_id = ?");
 
-            ps = CONNECTION.prepareStatement("update users set last_access_date = ? where user_id = ?");
+        ps.setTimestamp(1, now);
+        ps.setInt(2, this.userId);
 
-            ps.setTimestamp(1, now);
-            ps.setInt(2, this.userId);
-
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.executeUpdate();
     }
 
     /**
@@ -253,27 +169,20 @@ public class User {
      * @param username The username of the user to check if this is following
      * @return Whether this user follows the other user
      */
-    public boolean isFollowing(String username) {
-        try {
-            int followeeId = User.getUserId(username);
+    public boolean isFollowing(String username) throws SQLException {
+        int followeeId = User.getUserId(username);
 
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement("select count(*) from follows where follower_id = ? and followee_id = ?");
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("select count(*) from follows where follower_id = ? and followee_id = ?");
 
-            ps.setInt(1, this.userId);
-            ps.setInt(2, followeeId);
+        ps.setInt(1, this.userId);
+        ps.setInt(2, followeeId);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getInt(1) == 1;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return false;
+        return result.getInt(1) == 1;
     }
 
     /**
@@ -282,21 +191,16 @@ public class User {
      * 
      * @param username The username of the user to follow
      */
-    public void followUser(String username) {
-        try {
-            int followeeId = User.getUserId(username);
+    public void followUser(String username) throws SQLException {
+        int followeeId = User.getUserId(username);
 
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement("insert into follows(follower_id, followee_id) values (?, ?)");
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("insert into follows(follower_id, followee_id) values (?, ?)");
 
-            ps.setInt(1, this.userId);
-            ps.setInt(2, followeeId);
+        ps.setInt(1, this.userId);
+        ps.setInt(2, followeeId);
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.executeUpdate();
     }
 
     /**
@@ -305,21 +209,16 @@ public class User {
      * 
      * @param username The username of the user to unfollow
      */
-    public void unfollowUser(String username) {
-        try {
-            int followeeId = User.getUserId(username);
+    public void unfollowUser(String username) throws SQLException {
+        int followeeId = User.getUserId(username);
 
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement("delete from follows where follower_id = ? and followee_id = ?");
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("delete from follows where follower_id = ? and followee_id = ?");
 
-            ps.setInt(1, this.userId);
-            ps.setInt(2, followeeId);
+        ps.setInt(1, this.userId);
+        ps.setInt(2, followeeId);
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.executeUpdate();
     }
 
     /**
@@ -329,26 +228,18 @@ public class User {
      * @param bookId The id of the book we are checking
      * @return Whether the user has rated the book
      */
-    public boolean hasRatedBook(int bookId) {
-        try {
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement(
-                            "select count(*) from rating where user_id = ? and book_id = ?");
+    public boolean hasRatedBook(int bookId) throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("select count(*) from rating where user_id = ? and book_id = ?");
 
-            ps.setInt(1, this.userId);
-            ps.setInt(2, bookId);
+        ps.setInt(1, this.userId);
+        ps.setInt(2, bookId);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            result.next();
+        result.next();
 
-            return result.getInt(1) == 1;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        return false;
+        return result.getInt(1) == 1;
     }
 
     /**
@@ -358,20 +249,16 @@ public class User {
      * @param bookId The id of the book to rate
      * @param rating The rating the user is giving the book
      */
-    public void rateBook(int bookId, int rating) {
-        try {
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement("insert into rating(user_id, book_id, rating) values (?, ?, ?)");
+    public void rateBook(int bookId, int rating) throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("insert into rating(user_id, book_id, rating) values (?, ?, ?)");
 
-            ps.setInt(1, this.userId);
-            ps.setInt(2, bookId);
-            ps.setInt(3, rating);
+        ps.setInt(1, this.userId);
+        ps.setInt(2, bookId);
+        ps.setInt(3, rating);
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.executeUpdate();
+
     }
 
     /**
@@ -381,20 +268,15 @@ public class User {
      * @param bookId The id of the book to rate
      * @param rating The rating the user is giving the book
      */
-    public void updateBookRating(int bookId, int rating) {
-        try {
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement("update rating set rating = ? where user_id = ? and book_id = ?");
+    public void updateBookRating(int bookId, int rating) throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("update rating set rating = ? where user_id = ? and book_id = ?");
 
-            ps.setInt(1, rating);
-            ps.setInt(2, this.userId);
-            ps.setInt(3, bookId);
+        ps.setInt(1, rating);
+        ps.setInt(2, this.userId);
+        ps.setInt(3, bookId);
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.executeUpdate();
     }
 
     /**
@@ -407,137 +289,109 @@ public class User {
      * @param startTime The time the user began reading
      * @param endTime   The time the user finished reading
      */
-    public void readBook(int bookId, int startPage, int endPage, Timestamp startTime, Timestamp endTime) {
-        try {
-            PreparedStatement ps = CONNECTION
-                    .prepareStatement(
-                            "insert into session(session_id, user_id, book_id, start_page, end_page, start_time, end_time) values (DEFAULT, ?, ?, ?, ?, ?, ?)");
+    public void readBook(int bookId, int startPage, int endPage, Timestamp startTime, Timestamp endTime)
+            throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement(
+                "insert into session(session_id, user_id, book_id, start_page, end_page, start_time, end_time) values (DEFAULT, ?, ?, ?, ?, ?, ?)");
 
-            ps.setInt(1, this.userId);
-            ps.setInt(2, bookId);
-            ps.setInt(3, startPage);
-            ps.setInt(4, endPage);
-            ps.setTimestamp(5, startTime);
-            ps.setTimestamp(6, endTime);
+        ps.setInt(1, this.userId);
+        ps.setInt(2, bookId);
+        ps.setInt(3, startPage);
+        ps.setInt(4, endPage);
+        ps.setTimestamp(5, startTime);
+        ps.setTimestamp(6, endTime);
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.executeUpdate();
     }
 
     // duplicate collection names allowed
-    public void createCollection(String name) {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "insert into collection(collection_id, user_id, name) values (DEFAULT, ?, ?)");
-            ps.setInt(1, this.userId);
-            ps.setString(2, name);
+    public void createCollection(String name) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement(
+                "insert into collection(collection_id, user_id, name) values (DEFAULT, ?, ?)");
+        ps.setInt(1, this.userId);
+        ps.setString(2, name);
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
+        ps.executeUpdate();
+    }
+
+    public void addBookToCollection(int collectionId, int bookId) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement(
+                "insert into collection_book(user_id, collection_id, book_id) values (?, ?, ?)");
+        ps.setInt(1, this.userId);
+        ps.setInt(2, collectionId);
+        ps.setInt(3, bookId);
+
+        ps.executeUpdate();
+    }
+
+    public void removeBookFromCollection(int collectionId, int bookId) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement(
+                "delete from collection_book where user_id = ? and collection_id = ? and bookId = ?");
+        ps.setInt(1, this.userId);
+        ps.setInt(2, collectionId);
+        ps.setInt(3, bookId);
+
+        ps.executeUpdate();
+    }
+
+    /**
+     * Lists the user's collections in ascending order by name. For each collection,
+     * the name is listed, as well as the number of books and total number of pages.
+     */
+    public void listCollections() throws SQLException {
+        String query = "select c.name, count(cb.book_id), coalesce(sum(length), 0)\r\n" + //
+                "from collection c\r\n" + //
+                "left join collection_book cb on c.collection_id = cb.collection_id\r\n" + //
+                "left join book b on cb.book_id = b.book_id\r\n" + //
+                "where c.user_id = ?\r\n" + //
+                "group by c.collection_id, c.name\r\n" + //
+                "order by c.name";
+
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+
+        ps.setInt(1, this.userId);
+
+        ResultSet result = ps.executeQuery();
+
+        while (result.next()) {
+            System.out.println(result.getString(1));
+            System.out.println("- Number of books: " + result.getInt(2));
+            System.out.println("- Total pages: " + result.getInt(3));
         }
     }
 
-    public void addBookToCollection(int collectionId, int bookId) {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "insert into collection-book(user_id, collection_id, book_id) values (?, ?, ?)");
-            ps.setInt(1, this.userId);
-            ps.setInt(2, collectionId);
-            ps.setInt(3, bookId);
+    public boolean collectionExists(int collectionId) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement(
+                "select count(*) from collection where user_id = ? and collection_id = ?");
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.setInt(1, this.userId);
+        ps.setInt(2, collectionId);
+
+        ResultSet result = ps.executeQuery();
+
+        result.next();
+
+        return result.getInt(1) == 1;
     }
 
-    public void removeBookFromCollection(int collectionId, int bookId) {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "delete from collection-book where user_id = ? and collection_id = ? and bookId = ?");
-            ps.setInt(1, this.userId);
-            ps.setInt(2, collectionId);
-            ps.setInt(3, bookId);
+    public void deleteCollection(int collectionId) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement(
+                "delete from collection where user_id = ? and collection_id = ?");
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.setInt(1, this.userId);
+        ps.setInt(2, collectionId);
+
+        ps.executeUpdate();
     }
 
-    // list all collection name + id
-    public void listIDCollections() {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select * from collection where user_id = ?");
-            ps.setInt(1, this.userId);
+    public void renameCollection(int collectionId, String name) throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement(
+                "update collection set name = ? where user_id = ? and collection_id = ?");
 
-            ResultSet result = ps.executeQuery();
-            while (result.next()) {
-                System.out.println(result.getInt("collection_id") + "\t" + result.getString("name"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        ps.setString(1, name);
+        ps.setInt(2, this.userId);
+        ps.setInt(3, collectionId);
+
+        ps.executeUpdate();
     }
-
-    public boolean collectionExists(int collection_id) {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select count(*) from collection where user_id = ? and collection_id = ?");
-
-            ps.setInt(1, this.userId);
-            ps.setInt(2, collection_id);
-
-            ResultSet result = ps.executeQuery();
-
-            result.next();
-
-            return result.getInt(1) == 1;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-        return false;
-    }
-
-    public void deleteCollection(int collectionId) {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "delete from collection where user_id = ? and collection_id = ?");
-
-            ps.setInt(1, this.userId);
-            ps.setInt(2, collectionId);
-
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    public void renameCollection(int collectionId, String name) {
-        try {
-            PreparedStatement ps = CONNECTION.prepareStatement(
-                    "update collection set name = ? where user_id = ? and collection_id = ?");
-
-            ps.setString(1, name);
-            ps.setInt(2, this.userId);
-            ps.setInt(3, collectionId);
-
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
 }
