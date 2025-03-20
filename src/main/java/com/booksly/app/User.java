@@ -337,7 +337,7 @@ public class User {
      * the name is listed, as well as the number of books and total number of pages.
      */
     public void listCollections() throws SQLException {
-        String query = "select c.name, count(cb.book_id), coalesce(sum(length), 0)\r\n" + //
+        String query = "select c.collection_id, c.name, count(cb.book_id), coalesce(sum(length), 0)\r\n" + //
                 "from collection c\r\n" + //
                 "left join collection_book cb on c.collection_id = cb.collection_id\r\n" + //
                 "left join book b on cb.book_id = b.book_id\r\n" + //
@@ -352,9 +352,12 @@ public class User {
         ResultSet result = ps.executeQuery();
 
         while (result.next()) {
-            System.out.println(result.getString(1));
-            System.out.println("- Number of books: " + result.getInt(2));
-            System.out.println("- Total pages: " + result.getInt(3));
+            int collectionId = result.getInt(1);
+            String collectionName = result.getString(2);
+
+            System.out.println(collectionName + " [" + collectionId + "]");
+            System.out.println("- Number of books: " + result.getInt(3));
+            System.out.println("- Total pages: " + result.getInt(4));
         }
     }
 
