@@ -233,6 +233,13 @@ public class User {
             ps.setTimestamp(2, now);
 
             ps.executeUpdate();
+
+            ps = CONNECTION.prepareStatement("update users set last_access_date = ? where user_id = ?");
+
+            ps.setTimestamp(1, now);
+            ps.setInt(2, this.userId);
+
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
             System.exit(1);
@@ -421,80 +428,71 @@ public class User {
     }
 
     // duplicate collection names allowed
-    public void createCollection(String name){
+    public void createCollection(String name) {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "insert into collection(collection_id, user_id, name) values (DEFAULT, ?, ?)"
-            );
+                    "insert into collection(collection_id, user_id, name) values (DEFAULT, ?, ?)");
             ps.setInt(1, this.userId);
             ps.setString(2, name);
 
             ps.executeUpdate();
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
             System.exit(1);
         }
     }
 
-    public void addBookToCollection(int collectionId, int bookId){
+    public void addBookToCollection(int collectionId, int bookId) {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "insert into collection-book(user_id, collection_id, book_id) values (?, ?, ?)"
-            );
+                    "insert into collection-book(user_id, collection_id, book_id) values (?, ?, ?)");
             ps.setInt(1, this.userId);
             ps.setInt(2, collectionId);
             ps.setInt(3, bookId);
 
             ps.executeUpdate();
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
             System.exit(1);
         }
     }
-    public void removeBookFromCollection(int collectionId, int bookId){
+
+    public void removeBookFromCollection(int collectionId, int bookId) {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "delete from collection-book where user_id = ? and collection_id = ? and bookId = ?"
-            );
+                    "delete from collection-book where user_id = ? and collection_id = ? and bookId = ?");
             ps.setInt(1, this.userId);
             ps.setInt(2, collectionId);
             ps.setInt(3, bookId);
 
             ps.executeUpdate();
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
             System.exit(1);
         }
     }
-
 
     // list all collection name + id
-    public void listIDCollections(){
+    public void listIDCollections() {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select * from collection where user_id = ?"
-            );
+                    "select * from collection where user_id = ?");
             ps.setInt(1, this.userId);
 
             ResultSet result = ps.executeQuery();
-            while(result.next()){
+            while (result.next()) {
                 System.out.println(result.getInt("collection_id") + "\t" + result.getString("name"));
             }
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
             System.exit(1);
         }
     }
 
-    public boolean collectionExists(int collection_id){
+    public boolean collectionExists(int collection_id) {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select count(*) from collection where user_id = ? and collection_id = ?"
-            );
+                    "select count(*) from collection where user_id = ? and collection_id = ?");
 
             ps.setInt(1, this.userId);
             ps.setInt(2, collection_id);
@@ -511,11 +509,10 @@ public class User {
         return false;
     }
 
-    public void deleteCollection(int collectionId){
+    public void deleteCollection(int collectionId) {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "delete from collection where user_id = ? and collection_id = ?"
-            );
+                    "delete from collection where user_id = ? and collection_id = ?");
 
             ps.setInt(1, this.userId);
             ps.setInt(2, collectionId);
@@ -527,11 +524,10 @@ public class User {
         }
     }
 
-    public void renameCollection(int collectionId, String name){
+    public void renameCollection(int collectionId, String name) {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "update collection set name = ? where user_id = ? and collection_id = ?"
-            );
+                    "update collection set name = ? where user_id = ? and collection_id = ?");
 
             ps.setString(1, name);
             ps.setInt(2, this.userId);

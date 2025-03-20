@@ -199,6 +199,11 @@ public class App {
     }
 
     private void userFollowCommand(String username) {
+        if (username.equals(this.user.getUsername())) {
+            System.out.println("You can't follow yourself!");
+            return;
+        }
+
         if (!User.doesUserExist(username)) {
             System.out.println("No user found with that username");
             return;
