@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Scanner;
 
 import com.jcraft.jsch.JSchException;
@@ -200,7 +201,12 @@ public class App {
         }
     }
 
-    private void userFollowCommand(String username) throws SQLException {
+    private void userFollowCommand(String username) {
+        if (username.equals(this.user.getUsername())) {
+            System.out.println("You can't follow yourself!");
+            return;
+        }
+
         if (!User.doesUserExist(username)) {
             System.out.println("No user found with that username");
             return;
@@ -397,6 +403,7 @@ public class App {
 
         if (endTime.before(startTime)) {
             System.out.println("End time must be at least start time");
+            return;
         }
 
         if (!Book.doesBookExist(bookId)) {
@@ -415,7 +422,16 @@ public class App {
         this.user.readBook(bookId, startPage, endPage, startTime, endTime);
     }
 
-    private void collectionCreateCommand(String name) throws SQLException {
+    private void bookReadRandomCommand(Timestamp startTime, Timestamp endTime) {
+        int randomId = Book.getRandomBookId();
+        Book book = new Book(randomId);
+        Random rand = new Random();
+        int randStartPage = rand.nextInt(1, book.getLength());
+        int randEndPage = rand.nextInt(randStartPage, book.getLength());
+        bookReadCommand(randomId, randStartPage, randEndPage, startTime, endTime);
+    }
+
+    private void collectionCreateCommand(String name)  throws SQLException {
         this.user.createCollection(name);
     }
 
@@ -481,13 +497,20 @@ public class App {
 
                 bookRateCommand(bookId, rating);
             } else if (args[0].equals("book") && args[1].equals("read")) {
-                int bookId = Integer.parseInt(args[2]);
-                int startPage = Integer.parseInt(args[3]);
-                int endPage = Integer.parseInt(args[4]);
-                Timestamp startTime = Timestamp.valueOf(args[5]);
-                Timestamp endTime = Timestamp.valueOf(args[6]);
+                if (args[2].equals("random")) {
+                    Timestamp startTime = Timestamp.valueOf(args[3].replace("T", " "));
+                    Timestamp endTime = Timestamp.valueOf(args[4].replace("T", " "));
 
-                bookReadCommand(bookId, startPage, endPage, startTime, endTime);
+                    bookReadRandomCommand(startTime, endTime);
+                } else {
+                    int bookId = Integer.parseInt(args[2]);
+                    int startPage = Integer.parseInt(args[3]);
+                    int endPage = Integer.parseInt(args[4]);
+                    Timestamp startTime = Timestamp.valueOf(args[5].replace("T", " "));
+                    Timestamp endTime = Timestamp.valueOf(args[6].replace("T", " "));
+
+                    bookReadCommand(bookId, startPage, endPage, startTime, endTime);
+                }
             } else if (args[0].equals("collection") && args[1].equals("list")) {
                 collectionListCommand();
             } else if (args[0].equals("collection") && args[1].equals("create")) {
@@ -500,6 +523,8 @@ public class App {
                 collectionDeleteCommand(Integer.parseInt(args[2]));
             } else if (args[0].equals("collection") && args[1].equals("rename")) {
                 collectionRenameCommand(Integer.parseInt(args[2]), args[3]);
+            } else {
+                System.out.println("Unknown command");
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Missing arguments for previous command");
@@ -548,12 +573,6 @@ public class App {
         Book.setConnection(connection);
 
         inputLoop();
-
-        // SampleDataLoader loader = new SampleDataLoader(this.connection);
-
-        // loader.loadSampleFollows();
-
-        // System.out.println("done");
     }
 
     public static void main(String[] args) {

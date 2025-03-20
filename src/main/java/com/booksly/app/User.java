@@ -154,6 +154,11 @@ public class User {
         ps.setInt(1, this.userId);
         ps.setTimestamp(2, now);
 
+        ps = CONNECTION.prepareStatement("update users set last_access_date = ? where user_id = ?");
+
+        ps.setTimestamp(1, now);
+        ps.setInt(2, this.userId);
+
         ps.executeUpdate();
     }
 
