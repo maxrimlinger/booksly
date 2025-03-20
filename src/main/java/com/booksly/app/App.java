@@ -404,6 +404,7 @@ public class App {
         }
 
         User.setConnection(connection);
+        Book.setConnection(connection);
 
         inputLoop();
 
