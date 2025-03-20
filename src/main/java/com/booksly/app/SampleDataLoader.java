@@ -33,7 +33,7 @@ public class SampleDataLoader {
 
             Random randomId = new Random();
 
-            for (int i = 0; i < 5000; i++) {
+            for (int i = 0; i < 25000; i++) {
                 int userId = randomId.nextInt(1, 10001);
                 Timestamp creationDate = getCreationTimestamp(userId);
                 Timestamp accessTime = getRandomTimestamp(creationDate, 2025);
