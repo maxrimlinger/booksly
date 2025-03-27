@@ -204,4 +204,25 @@ public class Book {
 
         return 0;
     }
+
+    public static List<String> getMostPopular(){
+        try {
+            PreparedStatement ps = CONNECTION.prepareStatement(
+                    "select title from book b join session s on b.book_id = s.book_id" +
+                            "where s.start_time > current_date - 90" +
+                            "group by b.book_id order by count(s.book_id) desc limit 20"
+            );
+
+            ResultSet result = ps.executeQuery();
+            List<String> res = new ArrayList<>();
+
+            while(result.next()){
+                res.add(result.getString("title"));
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
+        return null;
+    }
 }
