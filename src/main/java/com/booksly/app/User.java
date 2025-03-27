@@ -397,4 +397,52 @@ public class User {
 
         ps.executeUpdate();
     }
+
+    /**
+     * Gets the number of collections this user has.
+     * 
+     * @return The user's total collection count
+     * @throws SQLException If there was an error with the query
+     */
+    public int getCollectionCount() throws SQLException {
+        String query = "select count(*) from collection where user_id = ?";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.userId);
+
+        ResultSet result = ps.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
+
+    /**
+     * Gets the number of followers this user has.
+     * 
+     * @return The user's total follower count
+     * @throws SQLException If there was an error with the query
+     */
+    public int getFollowerCount() throws SQLException {
+        String query = "select count(*) from follows where followee_id = ?";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.userId);
+
+        ResultSet result = ps.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
+
+    /**
+     * Gets the number of users this user is following.
+     * 
+     * @return The user's following count
+     * @throws SQLException If there was an error with the query
+     */
+    public int getFollowingCount() throws SQLException {
+        String query = "select count(*) from follows where follower_id = ?";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.userId);
+
+        ResultSet result = ps.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
 }

@@ -238,6 +238,23 @@ public class App {
         System.out.println("You are no longer following " + username);
     }
 
+    private void userProfileCommand(String username) throws SQLException {
+        if (User.doesUserExist(username)) {
+            System.out.println("No user found with that username");
+            return;
+        }
+
+        int userId = User.getUserId(username);
+        User user = new User(userId);
+
+        System.out.println("username: " + username);
+        System.out.println("collection count: " + user.getCollectionCount());
+        System.out.println("follower count: " + user.getFollowerCount());
+        System.out.println("following count: " + user.getFollowingCount());
+
+        // TODO: list top 10 books (by highest rating, most read, or combination)
+    }
+
     private static final List<String> VALID_FIELD_NAMES = List.of("title", "release date", "author", "publisher",
             "genre");
 
@@ -490,6 +507,8 @@ public class App {
                 userFollowCommand(args[2]);
             } else if (args[0].equals("user") && args[1].equals("unfollow")) {
                 userUnfollowCommand(args[2]);
+            } else if (args[0].equals("user") && args[1].equals("profile")) {
+                userProfileCommand(args[2]);
             } else if (args[0].equals("book") && args[1].equals("search")) {
                 bookSearchCommand();
             } else if (args[0].equals("book") && args[1].equals("rate")) {

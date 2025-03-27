@@ -3,7 +3,6 @@ package com.booksly.app;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,7 +155,7 @@ public class Book {
 
         return ratings;
     }
-  
+
     public static int getRandomBookId() {
         try {
             PreparedStatement ps = CONNECTION
