@@ -118,7 +118,7 @@ public class App {
         System.out.print("last name: ");
         String lastName = INPUT.nextLine().strip();
 
-        String passwordHash = SampleDataLoader.hashPassword(password);
+        String passwordHash = User.hashPassword(password);
         Timestamp now = Timestamp.from(Instant.now());
 
         try {
@@ -151,7 +151,7 @@ public class App {
     }
 
     private void loginCommand(String username, String password) {
-        String passwordHash = SampleDataLoader.hashPassword(password);
+        String passwordHash = User.hashPassword(password);
 
         try {
             PreparedStatement ps = this.connection.prepareStatement(

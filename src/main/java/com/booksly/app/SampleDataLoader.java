@@ -48,30 +48,6 @@ public class SampleDataLoader {
         }
     }
 
-    public static String hashPassword(String password) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] encodedhash = digest.digest(
-                    password.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(encodedhash);
-        } catch (NoSuchAlgorithmException e) {
-            System.err.println(e.getLocalizedMessage());
-            return null;
-        }
-    }
-
-    private static String bytesToHex(byte[] hash) {
-        StringBuilder hexString = new StringBuilder(2 * hash.length);
-        for (int i = 0; i < hash.length; i++) {
-            String hex = Integer.toHexString(0xff & hash[i]);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
-
     private static java.sql.Timestamp getRandomTimestamp(int startYear, int endYear) {
         Random random = new Random();
         long startMillis = Timestamp.valueOf(startYear + "-01-01 00:00:00").getTime();
@@ -116,7 +92,7 @@ public class SampleDataLoader {
                     String username = firstName + lastName;
                     String email = firstName.toLowerCase() + lastName.toLowerCase() + "@gmail.com";
                     String password = "pass_" + firstName + lastName;
-                    String passwordHash = hashPassword(password);
+                    String passwordHash = User.hashPassword(password);
                     Timestamp creationDate = getRandomTimestamp(2020, 2025);
                     Timestamp lastAccessDate = getRandomTimestamp(creationDate, 2025);
 

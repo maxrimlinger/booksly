@@ -1,11 +1,15 @@
 package com.booksly.app;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.*;
 
 public class User {
     private int userId;
@@ -13,6 +17,42 @@ public class User {
 
     public static void setConnection(Connection connection) {
         CONNECTION = connection;
+    }
+
+    public static String hashPassword(String password, String salt) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            StringBuilder salted = new StringBuilder();
+            for(int i = 0;i<password.length();i++) {
+                char c = salt.charAt((i+5)%salt.length());
+                salted.append(c);
+                salted.append(password.charAt(i));
+            }
+            byte[] encodedhash = digest.digest(
+                    password.getBytes(StandardCharsets.UTF_8));
+            return bytesToHex(encodedhash);
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println(e.getLocalizedMessage());
+            return null;
+        }
+    }
+
+    private static String bytesToHex(byte[] hash) {
+        StringBuilder hexString = new StringBuilder(2 * hash.length);
+        for (int i = 0; i < hash.length; i++) {
+            String hex = Integer.toHexString(0xff & hash[i]);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    private static String saltPassword(String password){
+        Random rand = new Random();
+        String salt = Integer.toHexString(rand.nextInt(Integer.MAX_VALUE));
+        return salt;
     }
 
     public static int getUserId(String username) throws SQLException {
