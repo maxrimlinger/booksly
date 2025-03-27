@@ -239,7 +239,7 @@ public class App {
     }
 
     private void userProfileCommand(String username) throws SQLException {
-        if (User.doesUserExist(username)) {
+        if (!User.doesUserExist(username)) {
             System.out.println("No user found with that username");
             return;
         }
@@ -252,7 +252,9 @@ public class App {
         System.out.println("follower count: " + user.getFollowerCount());
         System.out.println("following count: " + user.getFollowingCount());
 
-        // TODO: list top 10 books (by highest rating, most read, or combination)
+        user.displayTopRatings();
+        user.displayTopRead();
+        user.displayTopRatingsAndRead();
     }
 
     private static final List<String> VALID_FIELD_NAMES = List.of("title", "release date", "author", "publisher",
