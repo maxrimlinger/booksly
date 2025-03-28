@@ -9,10 +9,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -238,23 +240,46 @@ public class App {
         System.out.println("You are no longer following " + username);
     }
 
-    private void userProfileCommand(String username) throws SQLException {
+    private static final Collection<String> VALID_PROFILE_SORTS = Set.of("ratings", "read", "both");
+
+    /**
+     * Runs the user profile command.
+     * 
+     * @param username The username of the user whose profile to display
+     * @param ordering The ordering type on their top 10 books
+     * @throws SQLException If there was a problem running the query
+     */
+    private void userProfileCommand(String username, String ordering) throws SQLException {
+        // If the user doesn't exist, inform the user and return
         if (!User.doesUserExist(username)) {
             System.out.println("No user found with that username");
             return;
         }
 
+        // Make sure a valid profile sort was provided
+        if (!VALID_PROFILE_SORTS.contains(ordering)) {
+            System.out.println("Invalid result ordering, expected either ratings, read, or both");
+            return;
+        }
+
+        // Get the user ID from the username and construct a user with it
         int userId = User.getUserId(username);
         User user = new User(userId);
 
+        // Display the basic information about the user
         System.out.println("username: " + username);
         System.out.println("collection count: " + user.getCollectionCount());
         System.out.println("follower count: " + user.getFollowerCount());
         System.out.println("following count: " + user.getFollowingCount());
 
-        user.displayTopRatings();
-        user.displayTopRead();
-        user.displayTopRatingsAndRead();
+        // Display the appropriate top 10 list of books
+        if (ordering.equals("ratings")) {
+            user.displayTopRatings();
+        } else if (ordering.equals("read")) {
+            user.displayTopRead();
+        } else if (ordering.equals("both")) {
+            user.displayTopRatingsAndRead();
+        }
     }
 
     private static final List<String> VALID_FIELD_NAMES = List.of("title", "release date", "author", "publisher",
@@ -510,7 +535,7 @@ public class App {
             } else if (args[0].equals("user") && args[1].equals("unfollow")) {
                 userUnfollowCommand(args[2]);
             } else if (args[0].equals("user") && args[1].equals("profile")) {
-                userProfileCommand(args[2]);
+                userProfileCommand(args[2], args[3]);
             } else if (args[0].equals("book") && args[1].equals("search")) {
                 bookSearchCommand();
             } else if (args[0].equals("book") && args[1].equals("rate")) {
