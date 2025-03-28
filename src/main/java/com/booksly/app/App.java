@@ -9,10 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -470,6 +467,30 @@ public class App {
         }
     }
 
+    private void topReleasesCommand(){
+        ArrayList<String> books = Book.getTopReleases();
+        int count = 1;
+        for(String b : books){
+            System.out.println(count++ + ". " + b);
+        }
+    }
+
+    private void popularBooksCommand(){
+        ArrayList<String> books = Book.getPopularBooks();
+        int count = 1;
+        for(String b : books){
+            System.out.println(count++ + ". " + b);
+        }
+    }
+
+    private void popularBooksFollowersCommand(){
+        ArrayList<String> books = user.getPopularBooksFollowers();
+        int count = 1;
+        for(String b : books){
+            System.out.println(count++ + ". " + b);
+        }
+    }
+
     private void executeCommand(String[] args) {
         try {
             if (args[0].equals("signup")) {
@@ -524,7 +545,14 @@ public class App {
                 collectionDeleteCommand(Integer.parseInt(args[2]));
             } else if (args[0].equals("collection") && args[1].equals("rename")) {
                 collectionRenameCommand(Integer.parseInt(args[2]), args[3]);
-            } else {
+            } else if (args.length == 2 && args[0].equals("popular") && args[1].equals("books")){
+                popularBooksCommand();
+            } else if (args[0].equals("top") && args[1].equals("releases")){
+                topReleasesCommand();
+            } else if (args[0].equals("popular") && args[1].equals("books") && args[2].equals("followers")){
+                popularBooksFollowersCommand();
+            }
+            else {
                 System.out.println("Unknown command");
             }
         } catch (ArrayIndexOutOfBoundsException e) {
