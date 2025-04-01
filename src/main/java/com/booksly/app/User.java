@@ -29,7 +29,7 @@ public class User {
                 salted.append(password.charAt(i));
             }
             byte[] encodedhash = digest.digest(
-                    password.getBytes(StandardCharsets.UTF_8));
+                    salted.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(encodedhash);
         } catch (NoSuchAlgorithmException e) {
             System.err.println(e.getLocalizedMessage());
@@ -49,7 +49,7 @@ public class User {
         return hexString.toString();
     }
 
-    private static String saltPassword(String password){
+    public static String generateSalt(){
         Random rand = new Random();
         String salt = Integer.toHexString(rand.nextInt(Integer.MAX_VALUE));
         return salt;

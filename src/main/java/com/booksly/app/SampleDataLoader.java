@@ -92,7 +92,8 @@ public class SampleDataLoader {
                     String username = firstName + lastName;
                     String email = firstName.toLowerCase() + lastName.toLowerCase() + "@gmail.com";
                     String password = "pass_" + firstName + lastName;
-                    String passwordHash = User.hashPassword(password);
+                    String salt = User.generateSalt();
+                    String passwordHash = User.hashPassword(password, salt);
                     Timestamp creationDate = getRandomTimestamp(2020, 2025);
                     Timestamp lastAccessDate = getRandomTimestamp(creationDate, 2025);
 
