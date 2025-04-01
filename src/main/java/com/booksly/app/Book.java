@@ -204,4 +204,49 @@ public class Book {
 
         return 0;
     }
+
+    public static ArrayList<String> getPopularBooks(){
+        try {
+            PreparedStatement ps = CONNECTION.prepareStatement(
+                    "select title from book b join session s on b.book_id = s.book_id " +
+                            "where s.start_time > current_date - 90 " +
+                            "group by b.book_id order by count(s.book_id) desc limit 20"
+            );
+
+            ResultSet result = ps.executeQuery();
+            ArrayList<String> res = new ArrayList<>();
+
+            while(result.next()){
+                res.add(result.getString("title"));
+            }
+            return res;
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
+        return null;
+    }
+
+    public static ArrayList<String> getTopReleases(){
+        try {
+            PreparedStatement ps = CONNECTION.prepareStatement(
+                    "select title from book b join rating r on b.book_id = r.book_id " +
+                            "where extract(month from b.release_date) = extract(month from current_timestamp) and " +
+                            "extract(year from b.release_date) = extract(year from current_date) " +
+                            "group by b.book_id order by avg(r.rating) desc limit 5"
+            );
+
+            ResultSet result = ps.executeQuery();
+            ArrayList<String> res = new ArrayList<>();
+
+            while(result.next()){
+                res.add(result.getString("title"));
+            }
+            return res;
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
+        return null;
+    }
 }
