@@ -1,11 +1,15 @@
 package com.booksly.app;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.*;
 
 public class User {
     private int userId;
@@ -13,6 +17,42 @@ public class User {
 
     public static void setConnection(Connection connection) {
         CONNECTION = connection;
+    }
+
+    public static String hashPassword(String password, String salt) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            StringBuilder salted = new StringBuilder();
+            for(int i = 0;i<password.length();i++) {
+                char c = salt.charAt((i+5)%salt.length());
+                salted.append(c);
+                salted.append(password.charAt(i));
+            }
+            byte[] encodedhash = digest.digest(
+                    salted.toString().getBytes(StandardCharsets.UTF_8));
+            return bytesToHex(encodedhash);
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println(e.getLocalizedMessage());
+            return null;
+        }
+    }
+
+    private static String bytesToHex(byte[] hash) {
+        StringBuilder hexString = new StringBuilder(2 * hash.length);
+        for (int i = 0; i < hash.length; i++) {
+            String hex = Integer.toHexString(0xff & hash[i]);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    public static String generateSalt(){
+        Random rand = new Random();
+        String salt = Integer.toHexString(rand.nextInt(Integer.MAX_VALUE));
+        return salt;
     }
 
     public static int getUserId(String username) throws SQLException {
@@ -534,5 +574,29 @@ public class User {
             System.out.println(index + ") " + title + ": " + rating + ", " + readTime);
             index++;
         }
+
+    public ArrayList<String> getPopularBooksFollowers(){
+        try {
+            PreparedStatement ps = CONNECTION.prepareStatement(
+                    "select title from book b join session s on b.book_id = s.book_id " +
+                            "where s.user_id in " +
+                            "(select follower_id from follows where followee_id = ?) " +
+                            "group by b.book_id order by count(s.book_id) desc limit 20"
+            );
+
+            ps.setInt(1, this.userId);
+
+            ResultSet result = ps.executeQuery();
+            ArrayList<String> res = new ArrayList<>();
+
+            while(result.next()){
+                res.add(result.getString("title"));
+            }
+            return res;
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
+        return null;
     }
 }

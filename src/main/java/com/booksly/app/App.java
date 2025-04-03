@@ -9,12 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -120,12 +115,13 @@ public class App {
         System.out.print("last name: ");
         String lastName = INPUT.nextLine().strip();
 
-        String passwordHash = SampleDataLoader.hashPassword(password);
+        String salt = User.generateSalt();
+        String passwordHash = User.hashPassword(password, salt);
         Timestamp now = Timestamp.from(Instant.now());
 
         try {
             PreparedStatement ps = this.connection.prepareStatement(
-                    "insert into users(user_id, username, password_hash, first_name, last_name, email, creation_date, last_access_date) values (DEFAULT, ?, ?, ?, ?, ?, ?, ?)");
+                    "insert into users(user_id, username, password_hash, first_name, last_name, email, creation_date, last_access_date, password_salt) values (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             ps.setString(1, username);
             ps.setString(2, passwordHash);
@@ -134,6 +130,7 @@ public class App {
             ps.setString(5, email);
             ps.setTimestamp(6, now);
             ps.setTimestamp(7, now);
+            ps.setString(8, salt);
 
             ps.executeUpdate();
 
@@ -153,18 +150,36 @@ public class App {
     }
 
     private void loginCommand(String username, String password) {
-        String passwordHash = SampleDataLoader.hashPassword(password);
 
         try {
+            // get salt
             PreparedStatement ps = this.connection.prepareStatement(
-                    "select password_hash from users where username = ?");
-
+                "select password_salt from users where username = ?"
+            );
             ps.setString(1, username);
-
             ResultSet result = ps.executeQuery();
 
+            String salt = "";
             if (result.next()) {
-                String expectedHash = result.getString(1);
+                salt = result.getString(1);
+            } else {
+                System.out.println("No user found with that username");
+                return;
+            }
+
+            // hash
+            String passwordHash = User.hashPassword(password, salt);
+
+            // check salted hash against DB
+            PreparedStatement ps2 = this.connection.prepareStatement(
+                    "select password_hash from users where username = ?");
+
+            ps2.setString(1, username);
+
+            ResultSet result2 = ps2.executeQuery();
+
+            if (result2.next()) {
+                String expectedHash = result2.getString(1);
 
                 if (expectedHash.equals(passwordHash)) {
                     System.out.println("Correct password, you are now logged in");
@@ -514,6 +529,30 @@ public class App {
         }
     }
 
+    private void topReleasesCommand(){
+        ArrayList<String> books = Book.getTopReleases();
+        int count = 1;
+        for(String b : books){
+            System.out.println(count++ + ". " + b);
+        }
+    }
+
+    private void popularBooksCommand(){
+        ArrayList<String> books = Book.getPopularBooks();
+        int count = 1;
+        for(String b : books){
+            System.out.println(count++ + ". " + b);
+        }
+    }
+
+    private void popularBooksFollowersCommand(){
+        ArrayList<String> books = user.getPopularBooksFollowers();
+        int count = 1;
+        for(String b : books){
+            System.out.println(count++ + ". " + b);
+        }
+    }
+
     private void executeCommand(String[] args) {
         try {
             if (args[0].equals("signup")) {
@@ -570,7 +609,14 @@ public class App {
                 collectionDeleteCommand(Integer.parseInt(args[2]));
             } else if (args[0].equals("collection") && args[1].equals("rename")) {
                 collectionRenameCommand(Integer.parseInt(args[2]), args[3]);
-            } else {
+            } else if (args.length == 2 && args[0].equals("popular") && args[1].equals("books")){
+                popularBooksCommand();
+            } else if (args[0].equals("top") && args[1].equals("releases")){
+                topReleasesCommand();
+            } else if (args[0].equals("popular") && args[1].equals("books") && args[2].equals("followers")){
+                popularBooksFollowersCommand();
+            }
+            else {
                 System.out.println("Unknown command");
             }
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -614,6 +660,7 @@ public class App {
 
         if (!success) {
             System.err.println("Couldn't connect, now exiting...");
+            return;
         }
 
         User.setConnection(connection);
