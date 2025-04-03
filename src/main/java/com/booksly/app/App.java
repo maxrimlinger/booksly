@@ -115,12 +115,13 @@ public class App {
         System.out.print("last name: ");
         String lastName = INPUT.nextLine().strip();
 
-        String passwordHash = SampleDataLoader.hashPassword(password);
+        String salt = User.generateSalt();
+        String passwordHash = User.hashPassword(password, salt);
         Timestamp now = Timestamp.from(Instant.now());
 
         try {
             PreparedStatement ps = this.connection.prepareStatement(
-                    "insert into users(user_id, username, password_hash, first_name, last_name, email, creation_date, last_access_date) values (DEFAULT, ?, ?, ?, ?, ?, ?, ?)");
+                    "insert into users(user_id, username, password_hash, first_name, last_name, email, creation_date, last_access_date, password_salt) values (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             ps.setString(1, username);
             ps.setString(2, passwordHash);
@@ -129,6 +130,7 @@ public class App {
             ps.setString(5, email);
             ps.setTimestamp(6, now);
             ps.setTimestamp(7, now);
+            ps.setString(8, salt);
 
             ps.executeUpdate();
 
@@ -148,18 +150,36 @@ public class App {
     }
 
     private void loginCommand(String username, String password) {
-        String passwordHash = SampleDataLoader.hashPassword(password);
 
         try {
+            // get salt
             PreparedStatement ps = this.connection.prepareStatement(
-                    "select password_hash from users where username = ?");
-
+                "select password_salt from users where username = ?"
+            );
             ps.setString(1, username);
-
             ResultSet result = ps.executeQuery();
 
+            String salt = "";
             if (result.next()) {
-                String expectedHash = result.getString(1);
+                salt = result.getString(1);
+            } else {
+                System.out.println("No user found with that username");
+                return;
+            }
+
+            // hash
+            String passwordHash = User.hashPassword(password, salt);
+
+            // check salted hash against DB
+            PreparedStatement ps2 = this.connection.prepareStatement(
+                    "select password_hash from users where username = ?");
+
+            ps2.setString(1, username);
+
+            ResultSet result2 = ps2.executeQuery();
+
+            if (result2.next()) {
+                String expectedHash = result2.getString(1);
 
                 if (expectedHash.equals(passwordHash)) {
                     System.out.println("Correct password, you are now logged in");
@@ -596,6 +616,7 @@ public class App {
 
         if (!success) {
             System.err.println("Couldn't connect, now exiting...");
+            return;
         }
 
         User.setConnection(connection);
