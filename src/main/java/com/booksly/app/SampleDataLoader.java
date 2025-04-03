@@ -83,7 +83,7 @@ public class SampleDataLoader {
 
             PreparedStatement ps = connection
                     .prepareStatement(
-                            "insert into users(user_id, username, password_hash, first_name, last_name, email, creation_date, last_access_date) values (DEFAULT, ?, ?, ?, ?, ?, ?, ?)");
+                            "insert into users(user_id, username, password_hash, first_name, last_name, email, creation_date, last_access_date, password_salt) values (DEFAULT, ?, ?, ?, ?, ?, ?, ?)");
 
             for (int i = 0; i < 100; i++) {
                 for (int j = 0; j < 100; j++) {
@@ -104,6 +104,7 @@ public class SampleDataLoader {
                     ps.setString(5, email);
                     ps.setTimestamp(6, creationDate);
                     ps.setTimestamp(7, lastAccessDate);
+                    ps.setString(8, salt);
 
                     ps.executeUpdate();
                 }
@@ -113,6 +114,37 @@ public class SampleDataLoader {
             last.close();
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+        }
+    }
+
+    public void saltAllUnsaltedPasswords() {
+        try {
+            PreparedStatement ps = connection.prepareStatement(
+                "select user_id, first_name, last_name from users where password_salt is null"
+            );
+
+            ResultSet result = ps.executeQuery();
+
+            PreparedStatement inner = connection.prepareStatement(
+                "update users set password_hash = ?, password_salt = ? where user_id = ?"
+            );
+
+            while (result.next()) {
+                int userId = result.getInt("user_id");
+                String firstName = result.getString("first_name");
+                String lastName = result.getString("last_name");
+                
+                String salt = User.generateSalt();
+                String newHash = User.hashPassword("pass_" + firstName + lastName, salt);
+
+                inner.setString(1, newHash);
+                inner.setString(2, salt);
+                inner.setInt(3, userId);
+
+                inner.executeUpdate();
+            }
         } catch (SQLException e) {
             System.err.println(e.getLocalizedMessage());
         }

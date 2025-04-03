@@ -588,6 +588,7 @@ public class App {
 
         if (!success) {
             System.err.println("Couldn't connect, now exiting...");
+            return;
         }
 
         User.setConnection(connection);
