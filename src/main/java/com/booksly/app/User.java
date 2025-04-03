@@ -438,6 +438,144 @@ public class User {
         ps.executeUpdate();
     }
 
+    /**
+     * Gets the number of collections this user has.
+     * 
+     * @return The user's total collection count
+     * @throws SQLException If there was an error with the query
+     */
+    public int getCollectionCount() throws SQLException {
+        String query = "select count(*) from collection where user_id = ?";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.userId);
+
+        ResultSet result = ps.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
+
+    /**
+     * Gets the number of followers this user has.
+     * 
+     * @return The user's total follower count
+     * @throws SQLException If there was an error with the query
+     */
+    public int getFollowerCount() throws SQLException {
+        String query = "select count(*) from follows where followee_id = ?";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.userId);
+
+        ResultSet result = ps.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
+
+    /**
+     * Gets the number of users this user is following.
+     * 
+     * @return The user's following count
+     * @throws SQLException If there was an error with the query
+     */
+    public int getFollowingCount() throws SQLException {
+        String query = "select count(*) from follows where follower_id = ?";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.userId);
+
+        ResultSet result = ps.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
+
+    public void displayTopRatings() throws SQLException {
+        String query = "select title, rating\r\n" + //
+                "from book b inner join rating r\r\n" + //
+                "on b.book_id = r.book_id\r\n" + //
+                "where r.user_id = ?\r\n" + //
+                "order by r.rating desc, b.title\r\n" + //
+                "limit 10";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, userId);
+
+        System.out.println("\nTop ratings:");
+
+        ResultSet result = ps.executeQuery();
+        int index = 1;
+
+        while (result.next()) {
+            String title = result.getString(1);
+            int rating = result.getInt(2);
+            System.out.println(index + ") " + title + ": " + rating + " stars");
+            index++;
+        }
+    }
+
+    public void displayTopRead() throws SQLException {
+        String query = "select title, sum(extract(epoch from s.end_time - s.start_time)) as read_time\r\n" + //
+                "from book b inner join session s\r\n" + //
+                "on b.book_id = s.book_id\r\n" + //
+                "where s.user_id = ?\r\n" + //
+                "group by b.book_id, b.title\r\n" + //
+                "order by read_time desc, title\r\n" + //
+                "limit 10";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, userId);
+
+        System.out.println("\nTop read times:");
+
+        ResultSet result = ps.executeQuery();
+        int index = 1;
+
+        while (result.next()) {
+            String title = result.getString(1);
+            int readTime = result.getInt(2);
+            System.out.println(index + ") " + title + ": " + readTime + " seconds");
+            index++;
+        }
+    }
+
+    public void displayTopRatingsAndRead() throws SQLException {
+        String query = "select coalesce(rt.title, st.title) as title, rt.rating, st.read_time from\r\n" + //
+                "((select b.book_id, b.title, r.rating\r\n" + //
+                "    from book b left join rating r\r\n" + //
+                "    on b.book_id = r.book_id\r\n" + //
+                "    where r.user_id = ?) as rt\r\n" + //
+                "full outer join\r\n" + //
+                "(select b.book_id, b.title, sum(extract(epoch from s.end_time - s.start_time)) as read_time\r\n" + //
+                "    from book b left join session s\r\n" + //
+                "    on b.book_id = s.book_id\r\n" + //
+                "    where s.user_id = ?\r\n" + //
+                "    group by b.book_id, b.title) as st\r\n" + //
+                "    on rt.book_id = st.book_id)\r\n" + //
+                "order by rt.rating desc nulls last, st.read_time desc nulls last, title\r\n" + //
+                "limit 10";
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.userId);
+        ps.setInt(2, this.userId);
+
+        System.out.println("\nTop books by rating and read time");
+
+        ResultSet result = ps.executeQuery();
+        int index = 1;
+
+        while (result.next()) {
+            String title = result.getString(1);
+            String rating = Integer.toString(result.getInt(2));
+            if (rating.equals("0")) {
+                rating = "none";
+            } else {
+                rating += " stars";
+            }
+            String readTime = Integer.toString(result.getInt(3));
+            if (readTime.equals("0")) {
+                readTime = "none";
+            } else {
+                readTime += " seconds";
+            }
+            System.out.println(index + ") " + title + ": " + rating + ", " + readTime);
+            index++;
+        }
+    }
+
     public ArrayList<String> getPopularBooksFollowers(){
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
