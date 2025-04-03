@@ -574,6 +574,7 @@ public class User {
             System.out.println(index + ") " + title + ": " + rating + ", " + readTime);
             index++;
         }
+    }
 
     public ArrayList<String> getPopularBooksFollowers(){
         try {
