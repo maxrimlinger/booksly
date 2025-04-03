@@ -29,7 +29,7 @@ public class User {
                 salted.append(password.charAt(i));
             }
             byte[] encodedhash = digest.digest(
-                    salted.getBytes(StandardCharsets.UTF_8));
+                    salted.toString().getBytes(StandardCharsets.UTF_8));
             return bytesToHex(encodedhash);
         } catch (NoSuchAlgorithmException e) {
             System.err.println(e.getLocalizedMessage());
