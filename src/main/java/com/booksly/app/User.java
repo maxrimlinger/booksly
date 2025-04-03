@@ -437,4 +437,29 @@ public class User {
 
         ps.executeUpdate();
     }
+
+    public ArrayList<String> getPopularBooksFollowers(){
+        try {
+            PreparedStatement ps = CONNECTION.prepareStatement(
+                    "select title from book b join session s on b.book_id = s.book_id " +
+                            "where s.user_id in " +
+                            "(select follower_id from follows where followee_id = ?) " +
+                            "group by b.book_id order by count(s.book_id) desc limit 20"
+            );
+
+            ps.setInt(1, this.userId);
+
+            ResultSet result = ps.executeQuery();
+            ArrayList<String> res = new ArrayList<>();
+
+            while(result.next()){
+                res.add(result.getString("title"));
+            }
+            return res;
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
+        return null;
+    }
 }
