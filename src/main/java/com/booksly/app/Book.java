@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Book {
     private int bookId;
@@ -210,18 +212,17 @@ public class Book {
         return 0;
     }
 
-    public static ArrayList<String> getPopularBooks(){
+    public static ArrayList<String> getPopularBooks() {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
                     "select title from book b join session s on b.book_id = s.book_id " +
                             "where s.start_time > current_date - 90 " +
-                            "group by b.book_id order by count(s.book_id) desc limit 20"
-            );
+                            "group by b.book_id order by count(s.book_id) desc limit 20");
 
             ResultSet result = ps.executeQuery();
             ArrayList<String> res = new ArrayList<>();
 
-            while(result.next()){
+            while (result.next()) {
                 res.add(result.getString("title"));
             }
             return res;
@@ -232,19 +233,18 @@ public class Book {
         return null;
     }
 
-    public static ArrayList<String> getTopReleases(){
+    public static ArrayList<String> getTopReleases() {
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
                     "select title from book b join rating r on b.book_id = r.book_id " +
                             "where extract(month from b.release_date) = extract(month from current_timestamp) and " +
                             "extract(year from b.release_date) = extract(year from current_date) " +
-                            "group by b.book_id order by avg(r.rating) desc limit 5"
-            );
+                            "group by b.book_id order by avg(r.rating) desc limit 5");
 
             ResultSet result = ps.executeQuery();
             ArrayList<String> res = new ArrayList<>();
 
-            while(result.next()){
+            while (result.next()) {
                 res.add(result.getString("title"));
             }
             return res;
@@ -253,5 +253,53 @@ public class Book {
             System.exit(1);
         }
         return null;
+    }
+
+    /**
+     * Determines if a book has a given genre.
+     * 
+     * @param genreName The name of the genre
+     * @return Whether the book has the genre
+     * @throws SQLException If there was an error running the query
+     */
+    public boolean hasGenre(String genreName) throws SQLException {
+        String query = "select exists(select b.book_id, g.name\r\n" + //
+                "from book b inner join book_genre bg\r\n" + //
+                "on b.book_id = bg.book_id\r\n" + //
+                "inner join genre g\r\n" + //
+                "on g.genre_id = bg.genre_id\r\n" + //
+                "where b.book_id = ? and g.name = ?);";
+
+        // Create the statement and set the book ID and genre name
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.bookId);
+        ps.setString(2, genreName);
+
+        // Execute the query and return the result
+        ResultSet result = ps.executeQuery();
+        result.next();
+        return result.getBoolean(1);
+    }
+
+    /**
+     * Returns a set of the book's genre IDs.
+     * 
+     * @return A set of all IDs of genres this book is a part of
+     * @throws SQLException If there was an error running the query
+     */
+    public Set<Integer> getGenreIDs() throws SQLException {
+        String query = "select bg.genre_id from book_genre bg where bg.book_id = ?";
+
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
+        ps.setInt(1, this.bookId);
+
+        ResultSet result = ps.executeQuery();
+        Set<Integer> ids = new HashSet<>();
+
+        while (result.next()) {
+            ids.add(result.getInt(1));
+        }
+
+        return ids;
     }
 }

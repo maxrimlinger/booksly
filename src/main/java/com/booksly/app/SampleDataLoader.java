@@ -3,9 +3,6 @@ package com.booksly.app;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -15,36 +12,34 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 
 public class SampleDataLoader {
-    private Connection connection;
+    private static Connection CONNECTION;
 
-    public SampleDataLoader(Connection connection) {
-        this.connection = connection;
+    public static void setCONNECTION(Connection connection) {
+        CONNECTION = connection;
     }
 
-    public void loadSampleAccesses() {
-        try {
-            PreparedStatement ps = connection
-                    .prepareStatement(
-                            "insert into user_access(access_id, user_id, access_time) values (DEFAULT, ?, ?)");
+    public static void loadSampleAccesses() throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement(
+                        "insert into user_access(access_id, user_id, access_time) values (DEFAULT, ?, ?)");
 
-            Random randomId = new Random();
+        Random randomId = new Random();
 
-            for (int i = 0; i < 25000; i++) {
-                int userId = randomId.nextInt(1, 10001);
-                Timestamp creationDate = getCreationTimestamp(userId);
-                Timestamp accessTime = getRandomTimestamp(creationDate, 2025);
+        for (int i = 0; i < 25000; i++) {
+            int userId = randomId.nextInt(1, 10001);
+            Timestamp creationDate = getCreationTimestamp(userId);
+            Timestamp accessTime = getRandomTimestamp(creationDate, 2025);
 
-                ps.setInt(1, userId);
-                ps.setTimestamp(2, accessTime);
+            ps.setInt(1, userId);
+            ps.setTimestamp(2, accessTime);
 
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
+            ps.executeUpdate();
         }
     }
 
@@ -64,7 +59,7 @@ public class SampleDataLoader {
         return new Timestamp(randomMillisSinceEpoch);
     }
 
-    public void loadSampleUsers() {
+    public static void loadSampleUsers() throws SQLException {
         try {
             Scanner first = new Scanner(new File("./data/first_names.txt"));
             Scanner last = new Scanner(new File("./data/last_names.txt"));
@@ -81,7 +76,7 @@ public class SampleDataLoader {
                 lastNames.add(last.nextLine().strip());
             }
 
-            PreparedStatement ps = connection
+            PreparedStatement ps = CONNECTION
                     .prepareStatement(
                             "insert into users(user_id, username, password_hash, first_name, last_name, email, creation_date, last_access_date, password_salt) values (DEFAULT, ?, ?, ?, ?, ?, ?, ?)");
 
@@ -114,43 +109,35 @@ public class SampleDataLoader {
             last.close();
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
         }
     }
 
-    public void saltAllUnsaltedPasswords() {
-        try {
-            PreparedStatement ps = connection.prepareStatement(
-                "select user_id, first_name, last_name from users where password_salt is null"
-            );
+    public static void saltAllUnsaltedPasswords() throws SQLException {
+        PreparedStatement ps = CONNECTION.prepareStatement(
+                "select user_id, first_name, last_name from users where password_salt is null");
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            PreparedStatement inner = connection.prepareStatement(
-                "update users set password_hash = ?, password_salt = ? where user_id = ?"
-            );
+        PreparedStatement inner = CONNECTION.prepareStatement(
+                "update users set password_hash = ?, password_salt = ? where user_id = ?");
 
-            while (result.next()) {
-                int userId = result.getInt("user_id");
-                String firstName = result.getString("first_name");
-                String lastName = result.getString("last_name");
-                
-                String salt = User.generateSalt();
-                String newHash = User.hashPassword("pass_" + firstName + lastName, salt);
+        while (result.next()) {
+            int userId = result.getInt("user_id");
+            String firstName = result.getString("first_name");
+            String lastName = result.getString("last_name");
 
-                inner.setString(1, newHash);
-                inner.setString(2, salt);
-                inner.setInt(3, userId);
+            String salt = User.generateSalt();
+            String newHash = User.hashPassword("pass_" + firstName + lastName, salt);
 
-                inner.executeUpdate();
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
+            inner.setString(1, newHash);
+            inner.setString(2, salt);
+            inner.setInt(3, userId);
+
+            inner.executeUpdate();
         }
     }
 
-    public void loadSampleContributors() {
+    public static void loadSampleContributors() throws SQLException {
         try {
             Scanner first = new Scanner(new File("./data/contributor_first.txt"));
             Scanner last = new Scanner(new File("./data/contributor_last.txt"));
@@ -167,7 +154,7 @@ public class SampleDataLoader {
                 lastNames.add(last.nextLine().strip());
             }
 
-            PreparedStatement ps = connection
+            PreparedStatement ps = CONNECTION
                     .prepareStatement("insert into contributor(contributor_id, name) values (DEFAULT, ?)");
 
             for (int i = 0; i < 100; i++) {
@@ -186,35 +173,27 @@ public class SampleDataLoader {
             last.close();
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
         }
     }
 
-    private Timestamp getCreationTimestamp(int userId) {
-        try {
-            PreparedStatement ps = this.connection
-                    .prepareStatement("select creation_date from users where user_id = ?");
+    private static Timestamp getCreationTimestamp(int userId) throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("select creation_date from users where user_id = ?");
 
-            ps.setInt(1, userId);
+        ps.setInt(1, userId);
 
-            ResultSet result = ps.executeQuery();
+        ResultSet result = ps.executeQuery();
 
-            if (result.next()) {
-                return result.getTimestamp(1);
-            } else {
-                System.err.println("user not found");
-                System.exit(1);
-                return null;
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
+        if (result.next()) {
+            return result.getTimestamp(1);
+        } else {
+            System.err.println("user not found");
             System.exit(1);
             return null;
         }
     }
 
-    public void loadGenres() {
+    public static void loadGenres() throws SQLException {
         try (Scanner in = new Scanner(new File("./data/genres.txt"))) {
             List<String> genreNames = new ArrayList<>();
 
@@ -222,14 +201,14 @@ public class SampleDataLoader {
                 genreNames.add(in.nextLine().strip());
             }
 
-            PreparedStatement ps = this.connection.prepareStatement("insert into genre values (DEFAULT, ?)");
+            PreparedStatement ps = CONNECTION.prepareStatement("insert into genre values (DEFAULT, ?)");
 
             for (String genreName : genreNames) {
                 ps.setString(1, genreName);
 
                 ps.executeUpdate();
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println(e.getLocalizedMessage());
             System.exit(1);
         }
@@ -237,7 +216,7 @@ public class SampleDataLoader {
 
     private static final List<String> AUDIENCES = List.of("Kids", "Teens", "Adults");
 
-    public void loadSampleBooks() {
+    public static void loadSampleBooks() throws SQLException {
         try {
             Scanner adjectiveScanner = new Scanner(new File("./data/book_adjectives.txt"));
             Scanner nounScanner = new Scanner(new File("./data/book_nouns.txt"));
@@ -254,7 +233,7 @@ public class SampleDataLoader {
                 nouns.add(nounScanner.nextLine().strip());
             }
 
-            PreparedStatement ps = connection
+            PreparedStatement ps = CONNECTION
                     .prepareStatement(
                             "insert into book(book_id, title, audience, release_date, length) values (DEFAULT, ?, ?, ?, ?)");
 
@@ -282,140 +261,187 @@ public class SampleDataLoader {
             nounScanner.close();
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
         }
     }
 
-    public void loadSampleGenres() {
-        try {
-            PreparedStatement ps = connection
-                    .prepareStatement("insert into book_genre(book_id, genre_id) values (?, ?)");
+    public static void loadSampleGenres() throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("insert into book_genre(book_id, genre_id) values (?, ?)");
 
-            Random rng = new Random();
+        Random rng = new Random();
 
-            for (int bookId = 1; bookId <= 10000; bookId++) {
-                int genreCount = rng.nextInt(1, 4);
-
-                int added = 0;
-
-                while (added < genreCount) {
-                    ps.setInt(1, bookId);
-                    int genreId = rng.nextInt(1, 21);
-                    ps.setInt(2, genreId);
-
-                    try {
-                        ps.executeUpdate();
-                        added++;
-                    } catch (SQLException e) {
-                        System.err.println(e.getLocalizedMessage());
-                        System.out.println("conflicting genres, trying again");
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
-        }
-    }
-
-    public void loadSampleBookContributors(String contributorType) {
-        try {
-            String tableName = "book_" + contributorType;
-            String idFieldName = contributorType + "_id";
-
-            PreparedStatement ps = connection
-                    .prepareStatement("insert into " + tableName + "(book_id, " + idFieldName + ") values (?, ?)");
-
-            Random rng = new Random();
-
-            for (int bookId = 1; bookId <= 10000; bookId++) {
-                int contributorCount = rng.nextInt(1, 11) >= 9 ? 2 : 1;
-
-                int added = 0;
-
-                while (added < contributorCount) {
-                    ps.setInt(1, bookId);
-                    int contributorId = rng.nextInt(1, 10001);
-                    ps.setInt(2, contributorId);
-
-                    try {
-                        ps.executeUpdate();
-                        added++;
-                    } catch (SQLException e) {
-                        System.err.println(e.getLocalizedMessage());
-                        System.out.println("conflicting contributors, trying again");
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
-        }
-    }
-
-    private static final List<Integer> RATING_DISTRIBUTION = List.of(5, 5, 4, 4, 4, 4, 3, 3, 2, 1);
-
-    public void loadSampleRatings() {
-        try {
-            PreparedStatement ps = connection
-                    .prepareStatement("insert into rating(user_id, book_id, rating) values (?, ?, ?)");
-
-            Random rng = new Random();
+        for (int bookId = 1; bookId <= 10000; bookId++) {
+            int genreCount = rng.nextInt(1, 4);
 
             int added = 0;
 
-            while (added < 25000) {
-                int userId = rng.nextInt(1, 10001);
-                int bookId = rng.nextInt(1, 10001);
-                int rating = RATING_DISTRIBUTION.get(rng.nextInt(0, 10));
-
-                ps.setInt(1, userId);
-                ps.setInt(2, bookId);
-                ps.setInt(3, rating);
+            while (added < genreCount) {
+                ps.setInt(1, bookId);
+                int genreId = rng.nextInt(1, 21);
+                ps.setInt(2, genreId);
 
                 try {
                     ps.executeUpdate();
                     added++;
                 } catch (SQLException e) {
                     System.err.println(e.getLocalizedMessage());
-                    System.out.println("conflicting ratings, trying again");
+                    System.out.println("conflicting genres, trying again");
                 }
             }
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
         }
     }
 
-    public void loadSampleFollows() {
-        try {
-            PreparedStatement ps = connection
-                    .prepareStatement("insert into follows(follower_id, followee_id) values (?, ?)");
+    public static void loadSampleBookContributors(String contributorType) throws SQLException {
+        String tableName = "book_" + contributorType;
+        String idFieldName = contributorType + "_id";
 
-            Random rng = new Random();
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("insert into " + tableName + "(book_id, " + idFieldName + ") values (?, ?)");
+
+        Random rng = new Random();
+
+        for (int bookId = 1; bookId <= 10000; bookId++) {
+            int contributorCount = rng.nextInt(1, 11) >= 9 ? 2 : 1;
 
             int added = 0;
 
-            while (added < 25000) {
-                int followerId = rng.nextInt(1, 10001);
-                int followeeId = rng.nextInt(1, 10001);
-
-                ps.setInt(1, followerId);
-                ps.setInt(2, followeeId);
+            while (added < contributorCount) {
+                ps.setInt(1, bookId);
+                int contributorId = rng.nextInt(1, 10001);
+                ps.setInt(2, contributorId);
 
                 try {
                     ps.executeUpdate();
                     added++;
                 } catch (SQLException e) {
                     System.err.println(e.getLocalizedMessage());
-                    System.out.println("conflicting ratings, trying again");
+                    System.out.println("conflicting contributors, trying again");
                 }
             }
-        } catch (SQLException e) {
-            System.err.println(e.getLocalizedMessage());
         }
     }
 
-    public void loadSampleSessions() throws SQLException {
-        PreparedStatement ps = connection
+    private static final List<Integer> RATING_DISTRIBUTION = List.of(5, 4, 4, 4, 3, 3, 3, 2, 2, 1);
+    private static final List<Integer> MODIFIED_RATING_DISTRIBUTION = List.of(5, 5, 5, 4, 4, 4, 3, 3, 2, 1);
+
+    private static final Map<Integer, List<Integer>> RATING_DISTRIBUTIONS = Map.ofEntries(
+            Map.entry(1, List.of(5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1)),
+            Map.entry(2, List.of(5, 5, 5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1)),
+            Map.entry(3, List.of(5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1)),
+            Map.entry(4, List.of(5, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1)),
+            Map.entry(5, List.of(5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1)),
+            Map.entry(6, List.of(5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1)),
+            Map.entry(7, List.of(5, 5, 5, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(8, List.of(5, 5, 5, 4, 4, 4, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(9, List.of(5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 3, 3, 2, 2, 1, 1, 1, 1)),
+            Map.entry(10, List.of(5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 1, 1, 1, 1)),
+            Map.entry(11, List.of(5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1)),
+            Map.entry(12, List.of(5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1)),
+            Map.entry(13, List.of(5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(14, List.of(5, 5, 4, 4, 4, 4, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(15, List.of(5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(16, List.of(5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(17, List.of(5, 5, 5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(18, List.of(5, 5, 5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(19, List.of(5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1)),
+            Map.entry(20, List.of(5, 5, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1)));
+
+    public static void loadSampleRatingsV2() throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("insert into rating(user_id, book_id, rating) values (?, ?, ?)");
+
+        Random rng = new Random();
+
+        int added = 0;
+
+        while (added < 25000) {
+            int userId = rng.nextInt(1, 10001);
+            int bookId = rng.nextInt(1, 10001);
+            Book book = new Book(bookId);
+
+            int accumulatedRating = 0;
+            Set<Integer> genreIDs = book.getGenreIDs();
+
+            for (int id : genreIDs) {
+                int index = rng.nextInt(0, 20);
+                accumulatedRating += RATING_DISTRIBUTIONS.get(id).get(index);
+            }
+
+            int rating = Math.round((float) accumulatedRating / genreIDs.size());
+
+            ps.setInt(1, userId);
+            ps.setInt(2, bookId);
+            ps.setInt(3, rating);
+
+            try {
+                ps.executeUpdate();
+                added++;
+            } catch (SQLException e) {
+                System.err.println(e.getLocalizedMessage());
+                System.out.println("conflicting ratings, trying again");
+            }
+        }
+    }
+
+    public static void loadSampleRatings() throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("insert into rating(user_id, book_id, rating) values (?, ?, ?)");
+
+        Random rng = new Random();
+
+        int added = 0;
+
+        while (added < 50000) {
+            int userId = rng.nextInt(1, 10001);
+            int bookId = rng.nextInt(1, 10001);
+            Book book = new Book(bookId);
+
+            boolean hasLikedGenre = book.hasGenre("Comedy") || book.hasGenre("Action");
+            List<Integer> distribution = hasLikedGenre ? MODIFIED_RATING_DISTRIBUTION : RATING_DISTRIBUTION;
+
+            int rating = distribution.get(rng.nextInt(0, 10));
+
+            ps.setInt(1, userId);
+            ps.setInt(2, bookId);
+            ps.setInt(3, rating);
+
+            try {
+                ps.executeUpdate();
+                added++;
+            } catch (SQLException e) {
+                System.err.println(e.getLocalizedMessage());
+                System.out.println("conflicting ratings, trying again");
+            }
+        }
+    }
+
+    public static void loadSampleFollows() throws SQLException {
+        PreparedStatement ps = CONNECTION
+                .prepareStatement("insert into follows(follower_id, followee_id) values (?, ?)");
+
+        Random rng = new Random();
+
+        int added = 0;
+
+        while (added < 25000) {
+            int followerId = rng.nextInt(1, 10001);
+            int followeeId = rng.nextInt(1, 10001);
+
+            ps.setInt(1, followerId);
+            ps.setInt(2, followeeId);
+
+            try {
+                ps.executeUpdate();
+                added++;
+            } catch (SQLException e) {
+                System.err.println(e.getLocalizedMessage());
+                System.out.println("conflicting ratings, trying again");
+            }
+        }
+    }
+
+    public static void loadSampleSessions() throws SQLException {
+        PreparedStatement ps = CONNECTION
                 .prepareStatement(
                         "insert into session(session_id, user_id, book_id, start_page, end_page, start_time, end_time) values (DEFAULT, ?, ?, ?, ?, ?, ?)");
 
@@ -448,7 +474,7 @@ public class SampleDataLoader {
         }
     }
 
-    public void loadSampleCollections() throws SQLException {
+    public static void loadSampleCollections() throws SQLException {
         List<String> adverbs = new ArrayList<>();
         List<String> adjectives = new ArrayList<>();
         List<String> books = new ArrayList<>();
@@ -475,7 +501,7 @@ public class SampleDataLoader {
 
         String query = "insert into collection(collection_id, user_id, name) values (DEFAULT, ?, ?)";
 
-        PreparedStatement ps = this.connection.prepareStatement(query);
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
 
         Random rng = new Random();
 
@@ -495,10 +521,10 @@ public class SampleDataLoader {
         }
     }
 
-    public void loadSampleCollectionBooks() throws SQLException {
+    public static void loadSampleCollectionBooks() throws SQLException {
         String query = "insert into collection_book(collection_id, book_id) values (?, ?)";
 
-        PreparedStatement ps = this.connection.prepareStatement(query);
+        PreparedStatement ps = CONNECTION.prepareStatement(query);
 
         Random rng = new Random();
 

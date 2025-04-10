@@ -154,8 +154,7 @@ public class App {
         try {
             // get salt
             PreparedStatement ps = this.connection.prepareStatement(
-                "select password_salt from users where username = ?"
-            );
+                    "select password_salt from users where username = ?");
             ps.setString(1, username);
             ResultSet result = ps.executeQuery();
 
@@ -529,26 +528,26 @@ public class App {
         }
     }
 
-    private void topReleasesCommand(){
+    private void topReleasesCommand() {
         ArrayList<String> books = Book.getTopReleases();
         int count = 1;
-        for(String b : books){
+        for (String b : books) {
             System.out.println(count++ + ". " + b);
         }
     }
 
-    private void popularBooksCommand(){
+    private void popularBooksCommand() {
         ArrayList<String> books = Book.getPopularBooks();
         int count = 1;
-        for(String b : books){
+        for (String b : books) {
             System.out.println(count++ + ". " + b);
         }
     }
 
-    private void popularBooksFollowersCommand(){
+    private void popularBooksFollowersCommand() {
         ArrayList<String> books = user.getPopularBooksFollowers();
         int count = 1;
-        for(String b : books){
+        for (String b : books) {
             System.out.println(count++ + ". " + b);
         }
     }
@@ -609,14 +608,13 @@ public class App {
                 collectionDeleteCommand(Integer.parseInt(args[2]));
             } else if (args[0].equals("collection") && args[1].equals("rename")) {
                 collectionRenameCommand(Integer.parseInt(args[2]), args[3]);
-            } else if (args.length == 2 && args[0].equals("popular") && args[1].equals("books")){
+            } else if (args.length == 2 && args[0].equals("popular") && args[1].equals("books")) {
                 popularBooksCommand();
-            } else if (args[0].equals("top") && args[1].equals("releases")){
+            } else if (args[0].equals("top") && args[1].equals("releases")) {
                 topReleasesCommand();
-            } else if (args[0].equals("popular") && args[1].equals("books") && args[2].equals("followers")){
+            } else if (args[0].equals("popular") && args[1].equals("books") && args[2].equals("followers")) {
                 popularBooksFollowersCommand();
-            }
-            else {
+            } else {
                 System.out.println("Unknown command");
             }
         } catch (ArrayIndexOutOfBoundsException e) {
