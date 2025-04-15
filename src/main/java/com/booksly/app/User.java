@@ -604,7 +604,7 @@ public class User {
     public ArrayList<String> recommendBooks(){
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select distinct title from book b " +
+                    "select distinct title, avg(rating) from book b " +
                             "join book_author ba on b.book_id = ba.book_id " +
                             "join book_genre bg on b.book_id = bg.book_id " +
                             "join rating r on b.book_id = r.book_id " +
@@ -619,7 +619,8 @@ public class User {
                             "join session s on bg2.book_id = s.book_id " +
                             "where s.user_id = ?)) " +
                             "group by b.book_id " +
-                            "having avg(rating) >= 4.5"
+                            "having avg(rating) >= 4.5 " +
+                            "order by avg(rating) desc"
             );
             ps.setInt(1, this.userId);
             ps.setInt(2, this.userId);
@@ -629,7 +630,8 @@ public class User {
             ArrayList<String> res = new ArrayList<>();
 
             while(result.next()){
-                res.add(result.getString("title"));
+                res.add(result.getString("title") + " - " + result.getFloat(2));
+                //System.out.println(result.get);
             }
             return res;
 
