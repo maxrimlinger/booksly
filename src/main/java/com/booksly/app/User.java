@@ -600,4 +600,43 @@ public class User {
         }
         return null;
     }
+
+    public ArrayList<String> recommendBooks(){
+        try {
+            PreparedStatement ps = CONNECTION.prepareStatement(
+                    "select distinct title from book b " +
+                            "join book_author ba on b.book_id = ba.book_id " +
+                            "join book_genre bg on b.book_id = bg.book_id " +
+                            "join rating r on b.book_id = r.book_id " +
+                            "where " +
+                            "(ba.author_id in " +
+                            "(select ba2.author_id from book_author ba2 " +
+                            "join session s on ba2.book_id = s.book_id " +
+                            "where s.user_id = ?) " +
+                            "or " +
+                            "bg.genre_id in " +
+                            "(select bg2.genre_id from book_genre bg2 " +
+                            "join session s on bg2.book_id = s.book_id " +
+                            "where s.user_id = ?)) " +
+                            "group by b.book_id " +
+                            "having avg(rating) >= 4.5"
+            );
+            ps.setInt(1, this.userId);
+            ps.setInt(2, this.userId);
+           // ps.setInt(1, this.userId);
+            //ps.setInt(1, this.userId);
+            ResultSet result = ps.executeQuery();
+            ArrayList<String> res = new ArrayList<>();
+
+            while(result.next()){
+                res.add(result.getString("title"));
+            }
+            return res;
+
+        } catch (SQLException e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
+        return null;
+    }
 }
