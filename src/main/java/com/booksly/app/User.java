@@ -618,13 +618,22 @@ public class User {
                             "(select bg2.genre_id from book_genre bg2 " +
                             "join session s on bg2.book_id = s.book_id " +
                             "where s.user_id = ?)) " +
+                            "and b.book_id in -- now find books only from other users\n" +
+                            "(select distinct s1.book_id from session s1\n" +
+                            "join session s2 on s1.user_id = s2.user_id\n" +
+                            "where s1.book_id in\n" +
+                            "(select book_id from session\n" +
+                            "where user_id = ?) and s1.user_id != ?) " +
                             "group by b.book_id " +
-                            "having avg(rating) >= 4.5 " +
+                            "having avg(rating) >= 3 " +
                             "order by avg(rating) desc"
             );
             ps.setInt(1, this.userId);
             ps.setInt(2, this.userId);
-           // ps.setInt(1, this.userId);
+            ps.setInt(3, this.userId);
+            ps.setInt(4, this.userId);
+
+            // ps.setInt(1, this.userId);
             //ps.setInt(1, this.userId);
             ResultSet result = ps.executeQuery();
             ArrayList<String> res = new ArrayList<>();
