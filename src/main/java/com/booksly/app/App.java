@@ -552,6 +552,14 @@ public class App {
         }
     }
 
+    private void recommendBookCommand(){
+        ArrayList<String> books = user.recommendBooks();
+        int count = 1;
+        for (String b : books) {
+            System.out.println(count++ + ". " + b);
+        }
+    }
+
     private void executeCommand(String[] args) {
         try {
             if (args[0].equals("signup")) {
@@ -614,6 +622,8 @@ public class App {
                 topReleasesCommand();
             } else if (args[0].equals("popular") && args[1].equals("books") && args[2].equals("followers")) {
                 popularBooksFollowersCommand();
+            } else if (args[0].equals("recommend")){
+                recommendBookCommand();
             } else {
                 System.out.println("Unknown command");
             }
