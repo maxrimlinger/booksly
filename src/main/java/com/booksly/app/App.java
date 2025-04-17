@@ -557,8 +557,6 @@ public class App {
         int count = 1;
         for (String b : books) {
             System.out.println(count++ + ". " + b);
-            if (count > 5)
-                break;
         }
     }
 

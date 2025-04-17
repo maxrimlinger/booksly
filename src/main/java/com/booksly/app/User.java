@@ -626,7 +626,7 @@ public class User {
                             "where user_id = ?) and s1.user_id != ?) " +
                             "group by b.book_id " +
                             "having avg(rating) >= 3 " +
-                            "order by avg(rating) desc"
+                            "order by avg(rating) desc limit 5"
             );
             ps.setInt(1, this.userId);
             ps.setInt(2, this.userId);
