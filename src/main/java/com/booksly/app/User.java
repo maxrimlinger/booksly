@@ -604,34 +604,72 @@ public class User {
     public ArrayList<String> recommendBooks(){
         try {
             PreparedStatement ps = CONNECTION.prepareStatement(
-                    "select distinct title, avg(rating) from book b " +
-                            "join book_author ba on b.book_id = ba.book_id " +
-                            "join book_genre bg on b.book_id = bg.book_id " +
-                            "join rating r on b.book_id = r.book_id " +
-                            "where " +
-                            "(ba.author_id in " +
-                            "(select ba2.author_id from book_author ba2 " +
-                            "join session s on ba2.book_id = s.book_id " +
-                            "where s.user_id = ?) " +
-                            "or " +
-                            "bg.genre_id in " +
-                            "(select bg2.genre_id from book_genre bg2 " +
-                            "join session s on bg2.book_id = s.book_id " +
-                            "where s.user_id = ?)) " +
-                            "and b.book_id in -- now find books only from other users\n" +
-                            "(select distinct s1.book_id from session s1\n" +
-                            "join session s2 on s1.user_id = s2.user_id\n" +
-                            "where s1.book_id in\n" +
-                            "(select book_id from session\n" +
-                            "where user_id = ?) and s1.user_id != ?) " +
-                            "group by b.book_id " +
-                            "having avg(rating) >= 3 " +
-                            "order by avg(rating) desc limit 5"
+                    "with my_books as (select s.book_id\n" +
+                            "                  from session s\n" +
+                            "                  where s.user_id = ?),\n" +
+                            "     my_genres as (select bg.genre_id\n" +
+                            "                   from my_books b\n" +
+                            "                            inner join book_genre bg on b.book_id = bg.book_id),\n" +
+                            "     my_authors as (select ba.author_id\n" +
+                            "                    from my_books b\n" +
+                            "                             inner join book_author ba on b.book_id = ba.book_id),\n" +
+                            "     similar_users as (select distinct u.user_id\n" +
+                            "                       from users u\n" +
+                            "                                inner join session s on u.user_id = s.user_id\n" +
+                            "                       where u.user_id <> ?\n" +
+                            "                         and s.book_id in (select mb.book_id from my_books mb))\n" +
+                            "\n" +
+                            "select distinct b.title, avg(cast(rating as float)) as average_rating\n" +
+                            "from book b\n" +
+                            "         join book_author ba on b.book_id = ba.book_id\n" +
+                            "         join book_genre bg on b.book_id = bg.book_id\n" +
+                            "         join rating r on b.book_id = r.book_id\n" +
+                            "where (\n" +
+                            "    bg.genre_id in (select mg.genre_id from my_genres mg) or\n" +
+                            "    ba.author_id in (select ma.author_id from my_authors ma))\n" +
+                            "  and b.book_id in (select s.book_id\n" +
+                            "                    from similar_users su\n" +
+                            "                             inner join session s on s.user_id = su.user_id)\n" +
+                            "  and b.book_id not in (select mb.book_id from my_books mb)\n" +
+                            "group by b.book_id\n" +
+                            "having avg(cast(r.rating as float)) >= 3\n" +
+                            "order by average_rating desc\n" +
+                            "limit 5;"
+//                    "select distinct title, avg(rating) from book b " +
+//                            "join book_author ba on b.book_id = ba.book_id " +
+//                            "join book_genre bg on b.book_id = bg.book_id " +
+//                            "join rating r on b.book_id = r.book_id " +
+//                            "where " +
+//                            "(ba.author_id in " +
+//                            "(select ba2.author_id from book_author ba2 " +
+//                            "join session s on ba2.book_id = s.book_id " +
+//                            "where s.user_id = ?) " +
+//                            "or " +
+//                            "bg.genre_id in " +
+//                            "(select bg2.genre_id from book_genre bg2 " +
+//                            "join session s on bg2.book_id = s.book_id " +
+//                            "where s.user_id = ?)) " +
+//                            "and b.book_id in -- now find books only from other users\n" +
+//                            "(select distinct s1.book_id from session s1\n" +
+//                            "join session s2 on s1.user_id = s2.user_id\n" +
+//                            "where s1.book_id in\n" +
+//                            "(select book_id from session\n" +
+//                            "where user_id = ?) and s1.user_id != ?) " +
+//                            "and b.book_id not in\n" +
+//                            "    (select bb.book_id from session s1\n" +
+//                            "    join book bb on s1.book_id = bb.book_id\n" +
+//                            "    where s1.user_id = ?\n" +
+//                            "    )" +
+//                            "group by b.book_id " +
+//                            "having avg(rating) >= 3 " +
+//                            "order by avg(rating) desc limit 5"
             );
             ps.setInt(1, this.userId);
             ps.setInt(2, this.userId);
-            ps.setInt(3, this.userId);
-            ps.setInt(4, this.userId);
+//            ps.setInt(3, this.userId);
+//            ps.setInt(4, this.userId);
+//            ps.setInt(5, this.userId);
+
 
             // ps.setInt(1, this.userId);
             //ps.setInt(1, this.userId);
