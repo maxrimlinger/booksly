@@ -9,8 +9,7 @@ The premiere CLI application for pretending to read books.
 ## How to run
 
 ```
-javac *.java
-java Main
+mvn clean compile assembly:single -q && java -jar target/booksly-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ## Credits
